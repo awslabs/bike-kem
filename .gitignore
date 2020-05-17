@@ -1,0 +1,5 @@
+#Ignore compilation artifacts
+build
+
+#Ignore KAT results
+PQCkemKAT*

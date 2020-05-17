@@ -1,0 +1,53 @@
+Checks: '-*, 
+        bugprone-*,
+        cert-*,
+        -cert-msc50-cpp,
+        -cert-msc51-cpp,
+        -cert-msc30-c,
+        -cert-msc32-c,
+        darwin-*,
+        google-runtime-int,
+        hicpp-*,
+        -hicpp-signed-bitwise,
+        -hicpp-no-assembler,
+        misc-*,
+        readability-*,
+        -readability-magic-numbers,
+        -readability-isolate-declaration'
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
+FormatStyle: 'file'
+CheckOptions:
+  - key:             bugprone-argument-comment.StrictMode
+    value:           '1'
+  - key:             bugprone-argument-comment.CommentBoolLiterals
+    value:           '1'
+  - key:             bugprone-argument-comment.CommentIntegerLiterals
+    value:           '0'
+  - key:             bugprone-argument-comment.CommentFloatLiterals
+    value:           '1'
+  - key:             bugprone-argument-comment.CommentCharacterLiterals
+    value:           '1'
+  - key:             bugprone-argument-comment.CommentUserDefinedLiterals
+    value:           '1'
+  - key:             bugprone-argument-comment.CommentNullPtrs
+    value:           '1'
+  - key:             bugprone-misplaced-widening-cast.CheckImplicitCasts
+    value:           '1'
+  - key:             bugprone-sizeof-expression.WarnOnSizeOfConstant
+    value:           '1'
+  - key:             bugprone-sizeof-expression.WarnOnSizeOfIntegerExpression
+    value:           '1'
+  - key:             bugprone-sizeof-expression.WarnOnSizeOfCompareToConstant
+    value:           '1'
+  - key:             bugprone-suspicious-string-compare.WarnOnImplicitComparison
+    value:           '1'
+  - key:             bugprone-suspicious-string-compare.WarnOnLogicalNotComparison
+    value:           '1'
+  - key:             bugprone-suspicious-string-compare.StringCompareLikeFunctions
+    value:           '1'
+  - key:             google-runtime-int.TypeSufix
+    value:           '_t'
+  - key:             readability-magic-numbers.IgnoredIntegerValues
+    value:           '0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15'
