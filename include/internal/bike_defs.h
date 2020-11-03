@@ -45,7 +45,7 @@
 #  error "Bad level, choose one of 1/3/5"
 #endif
 
-#define NUM_OF_SEEDS 3
+#define NUM_OF_SEEDS 2
 
 // Round the size to the nearest byte.
 // SIZE suffix, is the number of bytes (uint8_t).
