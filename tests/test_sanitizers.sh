@@ -18,10 +18,10 @@ function test_sanitizers {
   fi
   if [ ! "${CC}" = "clang-9" ]; then
     return
-  fi  
+  fi
 
   for sanitizer in "-DASAN=1" "-DMSAN=1" "-DTSAN=1" "-DUBSAN=1" ; do
-    for level in "1" "3"; do
+    for level in "1" "3" "5"; do
       CC=clang-9 cmake $flags -DCMAKE_BUILD_TYPE=Release -DNUM_OF_TESTS=$num_of_tests -DLEVEL=$level $sanitizer ..;
       make -j20
       ./bike-test

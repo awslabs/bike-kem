@@ -62,6 +62,8 @@
 #  define SUB_I8(a, b)     _mm256_sub_epi8(a, b)
 #  define ADD_I16(a, b)    _mm256_add_epi16(a, b)
 #  define SUB_I16(a, b)    _mm256_sub_epi16(a, b)
+#  define ADD_I32(a, b)    _mm256_add_epi32(a, b)
+#  define SUB_I32(a, b)    _mm256_sub_epi32(a, b)
 #  define ADD_I64(a, b)    _mm256_add_epi64(a, b)
 #  define SRLI_I16(a, imm) _mm256_srli_epi16(a, imm)
 #  define SLLI_I32(a, imm) _mm256_slli_epi32(a, imm)
@@ -69,6 +71,7 @@
 
 #  define CMPGT_I16(a, b) _mm256_cmpgt_epi16(a, b)
 #  define CMPEQ_I16(a, b) _mm256_cmpeq_epi16(a, b)
+#  define CMPGT_I32(a, b) _mm256_cmpgt_epi32(a, b)
 #  define CMPEQ_I64(a, b) _mm256_cmpeq_epi64(a, b)
 
 #  define SHUF_I8(a, b)         _mm256_shuffle_epi8(a, b)
@@ -83,15 +86,18 @@
 #  define MSTORE(mem, mask, reg) _mm512_mask_store_epi64((mem), (mask), (reg))
 
 #  define SET1_I8(a)         _mm512_set1_epi8(a)
+#  define SET1_I16(a)        _mm512_set1_epi16(a)
+#  define SET1_I32(a)        _mm512_set1_epi32(a)
 #  define SET1_I64(a)        _mm512_set1_epi64(a)
 #  define SET1MZ_I8(mask, a) _mm512_maskz_set1_epi8(mask, a)
-#  define SET1_I16(a)        _mm512_set1_epi16(a)
 #  define SET_I64(...)       _mm512_set_epi64(__VA_ARGS__)
 #  define SET_ZERO           _mm512_setzero_si512()
 
 #  define ADD_I16(a, b)             _mm512_add_epi16(a, b)
+#  define ADD_I32(a, b)             _mm512_add_epi32(a, b)
 #  define ADD_I64(a, b)             _mm512_add_epi64(a, b)
 #  define MSUB_I16(src, k, a, b)    _mm512_mask_sub_epi16(src, k, a, b)
+#  define MSUB_I32(src, k, a, b)    _mm512_mask_sub_epi32(src, k, a, b)
 #  define SRLI_I16(a, imm)          _mm512_srli_epi16(a, imm)
 #  define SRLV_I64(a, cnt)          _mm512_srlv_epi64(a, cnt)
 #  define SLLV_I64(a, cnt)          _mm512_sllv_epi64(a, cnt)
@@ -101,6 +107,7 @@
 
 #  define CMPM_U8(a, b, cmp_op)  _mm512_cmp_epu8_mask(a, b, cmp_op)
 #  define CMPM_U16(a, b, cmp_op) _mm512_cmp_epu16_mask(a, b, cmp_op)
+#  define CMPM_U32(a, b, cmp_op) _mm512_cmp_epu32_mask(a, b, cmp_op)
 #  define CMPMEQ_I64(a, b)       _mm512_cmp_epi64_mask(a, b, _MM_CMPINT_EQ)
 
 #  define PERMX_I64(a, imm)        _mm512_permutex_epi64(a, imm)
