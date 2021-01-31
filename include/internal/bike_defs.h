@@ -45,6 +45,7 @@
 #  error "Bad level, choose one of 1/3/5"
 #endif
 
+#define MAX_D_T 256
 #define NUM_OF_SEEDS 2
 
 // Round the size to the nearest byte.
