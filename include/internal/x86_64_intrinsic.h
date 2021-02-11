@@ -103,9 +103,10 @@
 
 #  define CMPM_U8(a, b, cmp_op)  _mm512_cmp_epu8_mask(a, b, cmp_op)
 #  define CMPM_U16(a, b, cmp_op) _mm512_cmp_epu16_mask(a, b, cmp_op)
-#  define CMPMEQ_I32(a, b)          _mm512_cmp_epi32_mask(a, b, _MM_CMPINT_EQ)
-#  define MCMPMEQ_I32(mask, a, b)   _mm512_mask_cmp_epi32_mask(mask, a, b, _MM_CMPINT_EQ)
-#  define CMPMEQ_I64(a, b)       _mm512_cmp_epi64_mask(a, b, _MM_CMPINT_EQ)
+#  define CMPMEQ_I32(a, b)       _mm512_cmp_epi32_mask(a, b, _MM_CMPINT_EQ)
+#  define MCMPMEQ_I32(mask, a, b) \
+    _mm512_mask_cmp_epi32_mask(mask, a, b, _MM_CMPINT_EQ)
+#  define CMPMEQ_I64(a, b) _mm512_cmp_epi64_mask(a, b, _MM_CMPINT_EQ)
 
 #  define PERMX_I64(a, imm)        _mm512_permutex_epi64(a, imm)
 #  define PERMX2VAR_I64(a, idx, b) _mm512_permutex2var_epi64(a, idx, b)
