@@ -45,8 +45,6 @@
 #  error "Bad level, choose one of 1/3/5"
 #endif
 
-// Round largest of D,T to a multiple of DWORDS_IN_ZMM
-#define MAX_D_T      (DWORDS_IN_ZMM * DIVIDE_AND_CEIL(T, DWORDS_IN_ZMM))
 #define NUM_OF_SEEDS 2
 
 // Round the size to the nearest byte.

@@ -104,6 +104,7 @@
 // NOLINT is used to avoid the sizeof(T)/sizeof(T) warning when REG_T is defined
 // to be uint64_t
 #define REG_QWORDS (sizeof(REG_T) / sizeof(uint64_t)) // NOLINT
+#define REG_DWORDS (sizeof(REG_T) / sizeof(uint32_t)) // NOLINT
 
 ////////////////////////////////////////////
 //             Debug

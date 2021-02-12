@@ -5,9 +5,16 @@
  * AWS Cryptographic Algorithms Group.
  */
 
-#include <assert.h>
-
 #include "sampling.h"
+#include "defs.h"
+#include "x86_64_intrinsic.h"
+
+// SIMD implementation of is_new function requires the size of wlist
+// to be a multiple of the number of DWORDS in a SIMD register (REG_DWORDS).
+// The function is used both for generating D and T random number so we define
+// two separate macros.
+#define WLIST_SIZE_ADJUSTED_D (REG_DWORDS * DIVIDE_AND_CEIL(D, REG_DWORDS))
+#define WLIST_SIZE_ADJUSTED_T (REG_DWORDS * DIVIDE_AND_CEIL(T, REG_DWORDS))
 
 void get_seeds(OUT seeds_t *seeds)
 {
@@ -95,95 +102,55 @@ ret_t sample_uniform_r_bits_with_fixed_prf_context(
   return SUCCESS;
 }
 
-// Wlist[ctr] is compared to w[i] for all i < ctr.
-// Returns 0 if wlist[ctr] is already contained in wlist.
-// Returns 1 otherwise.
+#if(defined(AVX2) || defined(AVX512))
+
+// Compares wlist[ctr] to w[i] for all i < ctr.
+// Returns 0 if wlist[ctr] is contained in wlist, returns 1 otherwise.
 _INLINE_ int is_new(IN const idx_t *wlist, IN const size_t ctr)
 {
+  bike_static_assert((sizeof(idx_t) == sizeof(uint32_t)), idx_t_is_not_uint32_t);
 
-#if defined(AVX2)
+  REG_T idx_ctr = SET1_I32(wlist[ctr]);
 
-  // On AVX2 comparisons are done by using vector instructions, each vector
-  // containing DWORDS_IN_YMM=8 elements. Comparisons are done by comparing
-  // current={8 repetitions of wlist[ctr]} with complist={8 consecutive elements
-  // from wlist}. At the last step we only consider the comparisons up to ctr by
-  // masking the output of the comp instruction.
-  REG_T    complist, current, comp;
-  uint32_t check;
-  current =
-    SET1_I32(wlist[ctr]); // broadcast wlist[ctr] to 8 elements in the vector
+  for(size_t i = 0; i < ctr; i += REG_DWORDS) {
+    // Comparisons are done with SIMD instructions with each SIMD register
+    // containing REG_DWORDS elements. We compare registers element-wise:
+    // idx_ctr = {8 repetitions of wlist[ctr]}, with
+    // idx_cur = {8 consecutive elements from wlist}.
+    // In the last iteration we consider wlist elements only up to ctr.
 
-  for(size_t i = 0; i < (ctr / DWORDS_IN_YMM); i++) {
-    // Load 8 consecutive elements from wlist.
-    // Compare and save as "check", a uint32_t divided into 8 chunks of 4 bits.
-    // Each chunk is 0xF or 0x0 if the loaded element with correspoiding index is
-    // equal to wlist[ctr] or not.
-    complist = LOAD(&wlist[i * DWORDS_IN_YMM]);
-    comp     = CMPEQ_I32(current, complist);
-    check    = MOVEMASK(comp);
+    REG_T idx_cur = LOAD(&wlist[i]);
+
+#  if defined(AVX2)
+    REG_T    cmp_res = CMPEQ_I32(idx_ctr, idx_cur);
+    uint32_t check   = MOVEMASK(cmp_res);
+
+    // Handle the last iteration by appropriate masking.
+    if(ctr < (i + REG_DWORDS)) {
+      // MOVEMASK instruction in AVX2 compares corresponding bytes from
+      // two given vector registers and produces a 32-bit mask. On the other hand,
+      // we compare idx_t elements, not bytes, so we multiply by sizeof(idx_t).
+      check &= MASK((ctr - i) * sizeof(idx_t));
+    }
+#  else
+    uint16_t mask  = (ctr < (i + REG_DWORDS)) ? MASK(ctr - i) : 0xffff;
+    uint16_t check = MCMPMEQ_I32(mask, idx_ctr, idx_cur);
+#  endif
 
     if(check != 0) {
       return 0;
     }
   }
 
-  // Load last vector of 8 elements is loaded. Some of these might be wllist[i]
-  // for i>=ctr. This is dealt with by masking the check and considering only the
-  // first (ctr % 8) comparisons.
-  complist = LOAD(&wlist[(ctr / DWORDS_IN_YMM) * DWORDS_IN_YMM]);
-  comp     = CMPEQ_I32(current, complist);
-  check    = MOVEMASK(comp);
-  check &=
-    MASK(sizeof(idx_t) * (ctr & MASK(LOG2_MSB(DWORDS_IN_YMM) -
-                                     1))); // sizeof(idx_t) = 4,  ctr%8 = ctr &
-                                           // MASK(LOG2_MSB(DWORDS_IN_YMM) - 1)
-  if(check != 0) {
-    return 0;
-  }
-
   return 1;
-
-#elif defined(AVX512)
-
-  // On AVX512 comparisons are done by using vector instructions, each vector
-  // containing DWORDS_IN_ZMM=16 elements. Comparisons are done by comparing
-  // current={16 repetitions of wlist[ctr]} with complist={16 consecutive elements
-  // from wlist}. At the last step we only consider the comparisons up to ctr by
-  // using a masked comp instruction.
-  REG_T    complist, current;
-  uint32_t check;
-
-  current =
-    SET1_I32(wlist[ctr]); // broadcast wlist[ctr] to 16 elements in the vector
-
-  for(size_t i = 0; i < (ctr / DWORDS_IN_ZMM); i++) {
-    // Load 16 consecutive elements from wlist.
-    // Comparison outputs 16 bits, each being 1 or 0 depending if the loaded
-    // element with corresponding index is equal to wlist[ctr] or not.
-    complist = LOAD(&wlist[i * DWORDS_IN_ZMM]);
-    check    = CMPMEQ_I32(current, complist);
-    if(check != 0) {
-      return 0;
-    }
-  }
-
-  // Last vector of 16 elements is loaded.
-  // Comparison is done with a mask in order to compare only with the first (ctr %
-  // 16) elements. The output is (ctr % 16) bits each being 1 or 0 depending if
-  // the loaded element with corresponding index is equal to wlist[ctr] or not.
-  complist = LOAD(&wlist[(ctr / DWORDS_IN_ZMM) * DWORDS_IN_ZMM]);
-  check =
-    MCMPMEQ_I32(MASK(ctr & MASK(LOG2_MSB(DWORDS_IN_ZMM) - 1)), current,
-                complist); // ctr%16 = ctr & MASK(LOG2_MSB(DWORDS_IN_ZMM) - 1)
-  if(check != 0) {
-    return 0;
-  }
-
-  return 1;
+}
 
 #else
 
-  // Without vector operations we do a standard comparison.
+// Compares wlist[ctr] to w[i] for all i < ctr.
+// Returns 0 if wlist[ctr] is contained in wlist, returns 1 otherwise.
+_INLINE_ int is_new(IN const idx_t *wlist, IN const size_t ctr)
+{
   for(size_t i = 0; i < ctr; i++) {
     if(wlist[i] == wlist[ctr]) {
       return 0;
@@ -191,9 +158,8 @@ _INLINE_ int is_new(IN const idx_t *wlist, IN const size_t ctr)
   }
 
   return 1;
-
-#endif
 }
+#endif
 
 ret_t generate_indices_mod_z(OUT idx_t *     out,
                              IN const size_t num_indices,
@@ -232,9 +198,7 @@ ret_t generate_sparse_rep(OUT pad_r_t *r,
                           OUT idx_t *wlist,
                           IN OUT aes_ctr_prf_state_t *prf_state)
 {
-  idx_t wlist_temp[MAX_D_T] = {
-    0}; // Elements are loaded into SIMD registers of size DWORDS_IN_YMM=8 or
-        // DWORDS_IN_ZMM=16 so the size iz rounded to the topmost DWORDS multiple.
+  idx_t wlist_temp[WLIST_SIZE_ADJUSTED_D] = {0};
 
   GUARD(generate_indices_mod_z(wlist_temp, D, R_BITS, prf_state));
 
@@ -250,9 +214,7 @@ ret_t generate_error_vector(OUT pad_e_t *e, IN const seed_t *seed)
 
   GUARD(init_aes_ctr_prf_state(&prf_state, MAX_AES_INVOKATION, seed));
 
-  idx_t wlist[MAX_D_T] = {
-    0}; // Elements are loaded into SIMD registers of size DWORDS_IN_YMM or
-        // DWORDS_IN_ZMM so the size iz rounded to the topmost DWORDS multiple.
+  idx_t wlist[WLIST_SIZE_ADJUSTED_T] = {0};
   GUARD(generate_indices_mod_z(wlist, T, N_BITS, &prf_state));
 
   // (e0, e1) hold bits 0..R_BITS-1 and R_BITS..2*R_BITS-1 of the error, resp.
