@@ -69,6 +69,7 @@
 
 #  define CMPGT_I16(a, b) _mm256_cmpgt_epi16(a, b)
 #  define CMPEQ_I16(a, b) _mm256_cmpeq_epi16(a, b)
+#  define CMPEQ_I32(a, b) _mm256_cmpeq_epi32(a, b)
 #  define CMPEQ_I64(a, b) _mm256_cmpeq_epi64(a, b)
 
 #  define SHUF_I8(a, b)         _mm256_shuffle_epi8(a, b)
@@ -83,6 +84,7 @@
 #  define MSTORE(mem, mask, reg) _mm512_mask_store_epi64((mem), (mask), (reg))
 
 #  define SET1_I8(a)         _mm512_set1_epi8(a)
+#  define SET1_I32(a)        _mm512_set1_epi32(a)
 #  define SET1_I64(a)        _mm512_set1_epi64(a)
 #  define SET1MZ_I8(mask, a) _mm512_maskz_set1_epi8(mask, a)
 #  define SET1_I16(a)        _mm512_set1_epi16(a)
@@ -101,7 +103,10 @@
 
 #  define CMPM_U8(a, b, cmp_op)  _mm512_cmp_epu8_mask(a, b, cmp_op)
 #  define CMPM_U16(a, b, cmp_op) _mm512_cmp_epu16_mask(a, b, cmp_op)
-#  define CMPMEQ_I64(a, b)       _mm512_cmp_epi64_mask(a, b, _MM_CMPINT_EQ)
+#  define CMPMEQ_I32(a, b)       _mm512_cmp_epi32_mask(a, b, _MM_CMPINT_EQ)
+#  define MCMPMEQ_I32(mask, a, b) \
+    _mm512_mask_cmp_epi32_mask(mask, a, b, _MM_CMPINT_EQ)
+#  define CMPMEQ_I64(a, b) _mm512_cmp_epi64_mask(a, b, _MM_CMPINT_EQ)
 
 #  define PERMX_I64(a, imm)        _mm512_permutex_epi64(a, imm)
 #  define PERMX2VAR_I64(a, idx, b) _mm512_permutex2var_epi64(a, idx, b)
