@@ -25,9 +25,9 @@ if((NOT ${COMPILE_RESULT}) OR (NOT RUN_RESULT EQUAL 0))
   message(FATAL "Only little endian systems are supported")
 endif()
 
-if((NOT X86_64) AND (NOT X86))
-  # Non X86_64 platforms may not have AES_NI, POPCNT, and PCLMUL support
-  # Thus, they depend on OpenSSL for providing AES and SHA implementations
-  set(USE_OPENSSL 1)
-  set(PORTABLE 1)
-endif()
+# TODO: consider removing the lines below
+#if((NOT X86_64) AND (NOT X86))
+#  # Non X86_64 platforms may not have AES_NI, POPCNT, and PCLMUL support
+#  # Thus, they depend on OpenSSL for providing AES and SHA implementations
+#  set(USE_OPENSSL 1)
+#endif()

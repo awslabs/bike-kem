@@ -7,6 +7,9 @@
 
 #include "gf2x_internal.h"
 
+#define AVX512_INTERNAL
+#include "x86_64_intrinsic.h"
+
 #define CLMUL(x, y, imm) _mm512_clmulepi64_epi128((x), (y), (imm))
 
 _INLINE_ void
@@ -81,7 +84,9 @@ _INLINE_ void gf2x_mul8_512_int(OUT __m512i *zh,
 
 // 1024x1024 bit multiplication performed by Karatsuba algorithm.
 // Here, a and b are considered as having 16 digits of size 64 bits.
-void gf2x_mul_base(OUT uint64_t *c, IN const uint64_t *a, IN const uint64_t *b)
+void gf2x_mul_base_vpclmul(OUT uint64_t *c,
+                           IN const uint64_t *a,
+                           IN const uint64_t *b)
 {
   const __m512i a0 = LOAD(a);
   const __m512i a1 = LOAD(&a[QWORDS_IN_ZMM]);
@@ -102,7 +107,7 @@ void gf2x_mul_base(OUT uint64_t *c, IN const uint64_t *a, IN const uint64_t *b)
   STORE(&c[3 * QWORDS_IN_ZMM], hi[1]);
 }
 
-void gf2x_sqr(OUT dbl_pad_r_t *c, IN const pad_r_t *a)
+void gf2x_sqr_vpclmul(OUT dbl_pad_r_t *c, IN const pad_r_t *a)
 {
   __m512i va, vm, vr0, vr1;
 
