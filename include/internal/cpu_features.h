@@ -7,6 +7,11 @@
 
 #pragma once
 
-#include "types.h"
+#include <stdint.h>
 
-ret_t decode(OUT e_t *e, IN const ct_t *ct, IN const sk_t *sk);
+void cpu_features_init(void);
+
+uint32_t is_avx2_enabled(void);
+uint32_t is_avx512_enabled(void);
+uint32_t is_pclmul_enabled(void);
+uint32_t is_vpclmul_enabled(void);

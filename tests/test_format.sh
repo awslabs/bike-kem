@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0"
 
 function test_format {
-  cmake ..; 
+  cmake $1 ..;
   make format;
   rm -rf *;
 }

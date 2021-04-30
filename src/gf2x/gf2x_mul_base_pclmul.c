@@ -88,7 +88,9 @@ _INLINE_ void gf2x_mul4_int(OUT __m128i      c[4],
 
 // 512x512bit multiplication performed by Karatsuba algorithm
 // where a and b are considered as having 8 digits of size 64 bits.
-void gf2x_mul_base(OUT uint64_t *c, IN const uint64_t *a, IN const uint64_t *b)
+void gf2x_mul_base_pclmul(OUT uint64_t *c,
+                          IN const uint64_t *a,
+                          IN const uint64_t *b)
 {
   __m128i va[4], vb[4];
   __m128i aa[2], bb[2];
@@ -128,7 +130,7 @@ void gf2x_mul_base(OUT uint64_t *c, IN const uint64_t *a, IN const uint64_t *b)
   STORE128(&c[7 * QWORDS_IN_XMM], hi[3]);
 }
 
-void gf2x_sqr(OUT dbl_pad_r_t *c, IN const pad_r_t *a)
+void gf2x_sqr_pclmul(OUT dbl_pad_r_t *c, IN const pad_r_t *a)
 {
   __m128i va, vr0, vr1;
 

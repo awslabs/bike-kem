@@ -14,6 +14,7 @@
 #include "kem.h"
 #include "measurements.h"
 #include "utilities.h"
+#include "cpu_features.h"
 
 #if !defined(NUM_OF_TESTS)
 #  define NUM_OF_TESTS 1
@@ -41,6 +42,9 @@ typedef struct magic_number_s {
 ////////////////////////////////////////////////////////////////
 int main()
 {
+  // Initialize the CPU features flags
+  cpu_features_init();
+
 #if defined(FIXED_SEED)
   srand(0);
 #else

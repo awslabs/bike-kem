@@ -7,16 +7,19 @@
 
 #include <assert.h>
 
-#include "sampling.h"
+#include "sampling_internal.h"
 
-// For improved performance, we process NUM_ZMMS amount of data in parallel.
+#define AVX2_INTERNAL
+#include "x86_64_intrinsic.h"
+
+// For improved performance, we process NUM_YMMS amount of data in parallel.
 #define NUM_YMMS    (4)
 #define YMMS_QWORDS (QWORDS_IN_YMM * NUM_YMMS)
 
-void secure_set_bits(OUT pad_r_t *   r,
-                     IN const size_t first_pos,
-                     IN const idx_t *wlist,
-                     IN const size_t w_size)
+void secure_set_bits_avx2(OUT pad_r_t *   r,
+                          IN const size_t first_pos,
+                          IN const idx_t *wlist,
+                          IN const size_t w_size)
 {
   // The function assumes that the size of r is a multiple
   // of the cumulative size of used YMM registers.
@@ -78,4 +81,37 @@ void secure_set_bits(OUT pad_r_t *   r,
       va_pos_qw[va_iter] = ADD_I64(va_pos_qw[va_iter], inc);
     }
   }
+}
+
+int is_new_avx2(IN const idx_t *wlist, IN const size_t ctr)
+{
+  bike_static_assert((sizeof(idx_t) == sizeof(uint32_t)), idx_t_is_not_uint32_t);
+
+  REG_T idx_ctr = SET1_I32(wlist[ctr]);
+
+  for(size_t i = 0; i < ctr; i += REG_DWORDS) {
+    // Comparisons are done with SIMD instructions with each SIMD register
+    // containing REG_DWORDS elements. We compare registers element-wise:
+    // idx_ctr = {8 repetitions of wlist[ctr]}, with
+    // idx_cur = {8 consecutive elements from wlist}.
+    // In the last iteration we consider wlist elements only up to ctr.
+
+    REG_T    idx_cur = LOAD(&wlist[i]);
+    REG_T    cmp_res = CMPEQ_I32(idx_ctr, idx_cur);
+    uint32_t check   = MOVEMASK(cmp_res);
+
+    // Handle the last iteration by appropriate masking.
+    if(ctr < (i + REG_DWORDS)) {
+      // MOVEMASK instruction in AVX2 compares corresponding bytes from
+      // two given vector registers and produces a 32-bit mask. On the other hand,
+      // we compare idx_t elements, not bytes, so we multiply by sizeof(idx_t).
+      check &= MASK((ctr - i) * sizeof(idx_t));
+    }
+
+    if(check != 0) {
+      return 0;
+    }
+  }
+
+  return 1;
 }

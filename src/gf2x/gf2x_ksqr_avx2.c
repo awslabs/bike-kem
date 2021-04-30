@@ -13,10 +13,13 @@
 #include "cleanup.h"
 #include "gf2x_internal.h"
 
+#define AVX2_INTERNAL
+#include "x86_64_intrinsic.h"
+
 #define NUM_YMMS    (2)
 #define NUM_OF_VALS (NUM_YMMS * WORDS_IN_YMM)
 
-void generate_map(OUT uint16_t *map, IN const uint16_t l_param)
+_INLINE_ void generate_map(OUT uint16_t *map, IN const uint16_t l_param)
 {
   __m256i vmap[NUM_YMMS], vtmp[NUM_YMMS], vr, inc, zero;
 
@@ -156,7 +159,7 @@ _INLINE_ void bin_to_bytes(OUT uint8_t *bytes_buf, IN const pad_r_t *bin_buf)
 // For improved performance, we compute the result by inverted permutation pi1:
 //     pi1 : (j * 2^-k) % r --> j.
 // Input argument l_param is defined as the value (2^-k) % r.
-void k_squaring(OUT pad_r_t *c, IN const pad_r_t *a, IN const size_t l_param)
+void k_sqr_avx2(OUT pad_r_t *c, IN const pad_r_t *a, IN const size_t l_param)
 {
   ALIGN(ALIGN_BYTES) uint16_t map[R_PADDED];
   ALIGN(ALIGN_BYTES) uint8_t  a_bytes[R_PADDED];
