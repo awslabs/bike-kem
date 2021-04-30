@@ -15,8 +15,23 @@ fi
 
 test_num=$1
 
-# TODO: download SDE if not availabale
-INTEL_SDE=/home/ubuntu/workspace/intel_sde/sde64
+# Download Intel SDE if it's not available on the system
+intel_sde=sde64
+if ! command -v $intel_sde &> /dev/null
+then
+    echo "sde64 could not be found, downloading the program..."
+    intel_sde_ver=sde-external-8.63.0-2021-01-18-lin
+    rm -rf ${intel_sde_ver} ${intel_sde_ver}.tar.bz2
+    wget https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/${intel_sde_ver}.tar.bz2
+    tar -xvjf sde-external-8.63.0-2021-01-18-lin.tar.bz2
+    rm ${intel_sde_ver}.tar.bz2
+    if ! command -v ${intel_sde_ver}/sde64 &> /dev/null
+    then
+      echo "Downloading Intel SDE was NOT successful, please download the program manually."
+      exit
+    fi
+    intel_sde=`realpath ${intel_sde_ver}/sde64`
+fi
 
 # Avoid removing the "build" directory if the script does not run from the
 # package root directory
@@ -41,17 +56,19 @@ if [ "$test_num" -lt "1" ]; then
     test_format "-DSTANDALONE_IMPL=1"
 fi
 
-if [ "$test_num" -lt "2" ]; then
-    test_clang_tidy ""
-    test_clang_tidy "-STANDALONE_IMPL=1"
-    test_clang_tidy "-DRDTSC=1"
-    test_clang_tidy "-DVERBOSE=1"
-fi
+# NOTE: clang-tidy is currently disabled because it doesn't know
+#       how to handle the __cpuid_count function in cpu_features.c
+#if [ "$test_num" -lt "2" ]; then
+#    test_clang_tidy ""
+#    test_clang_tidy "-STANDALONE_IMPL=1"
+#    test_clang_tidy "-DRDTSC=1"
+#    test_clang_tidy "-DVERBOSE=1"
+#fi
 
 # Test KATs
 if [ "$test_num" -lt "3" ]; then
-  test_kats ${INTEL_SDE}
-  test_sanitizers ${INTEL_SDE}
+  test_kats ${intel_sde}
+  test_sanitizers ${intel_sde}
 fi
 
 cd -

@@ -83,20 +83,14 @@ endif()
 # The fully portable implementation uses OpenSSL for AES and it can run
 # on any CPU architecture as long as OpenSSL is available.
 if(STANDALONE_IMPL)
+  if((NOT X86_64) AND (NOT X86))
+    message(FATAL_ERROR " Standalone implementation works only on x86 systems.")
+  endif()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -maes -mssse3")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE_IMPL=${STANDALONE_IMPL}")
 else()
   set(LINK_OPENSSL 1)
 endif()
-
-# TODO: delete the lines below
-#if(USE_OPENSSL)
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_OPENSSL=${USE_OPENSSL}")
-#  set(LINK_OPENSSL 1)
-#else()
-#  # When not using OpenSSL we must enable SSSE3 and AES_NI support
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -maes -mssse3")
-#endif()
 
 if(USE_NIST_RAND)
   if(FIXED_SEED)
