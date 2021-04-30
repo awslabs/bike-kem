@@ -78,6 +78,10 @@ if(LEVEL)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLEVEL=${LEVEL}")
 endif()
 
+if(BIND_PK_AND_M)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBIND_PK_AND_M=1")
+endif()
+
 # Standalone implementation features an implementation of AES that uses
 # AES-NI and SSE3 x86 instructions (which means it is not fully portable).
 # The fully portable implementation uses OpenSSL for AES and it can run
