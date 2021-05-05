@@ -22,7 +22,11 @@ endif()
 if(STANDALONE_IMPL)
   target_sources(${PROJECT_NAME}
     PRIVATE
-      ${CMAKE_CURRENT_LIST_DIR}/aes.c
-      ${CMAKE_CURRENT_LIST_DIR}/sha.c      
-  )
+      ${CMAKE_CURRENT_LIST_DIR}/aes.c)
+  # TODO: clarify the SHA3 situation and rename sha.c
+  if(NOT USE_SHA3_AND_SHAKE)
+    target_sources(${PROJECT_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/sha.c)
+  endif()
 endif()

@@ -82,16 +82,29 @@ if(BIND_PK_AND_M)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBIND_PK_AND_M=1")
 endif()
 
+# Using SHA3 and SHAKE forces the standalone implementation
+if(USE_SHA3_AND_SHAKE)
+  set(STANDALONE_IMPL ON)
+endif()
+
 # Standalone implementation features an implementation of AES that uses
 # AES-NI and SSE3 x86 instructions (which means it is not fully portable).
 # The fully portable implementation uses OpenSSL for AES and it can run
 # on any CPU architecture as long as OpenSSL is available.
+# TODO: clarify situation with sha3
 if(STANDALONE_IMPL)
-  if((NOT X86_64) AND (NOT X86))
-    message(FATAL_ERROR " Standalone implementation works only on x86 systems.")
+  if((NOT X86_64) AND (NOT X86) AND (NOT USE_SHA3_AND_SHAKE))
+    message(FATAL_ERROR " Standalone implementation with AES based PRNG works only on x86 systems.")
   endif()
+
+  if(USE_SHA3_AND_SHAKE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_SHA3_AND_SHAKE=1")
+#  else()
+  # TODO: when shake is added move aes and sse3 flags here
+  endif()
+
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -maes -mssse3")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE_IMPL=${STANDALONE_IMPL}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE_IMPL=1")
 else()
   set(LINK_OPENSSL 1)
 endif()
