@@ -438,7 +438,7 @@ void shake256_absorb(uint64_t state[25], const uint8_t *in, size_t inlen)
 }
 
 /*************************************************
-* Name:        shake256_squeezeblocks
+* Name:        shake256_squeeze
 *
 * Description: Squeeze step of SHAKE256 XOF. Squeezes full blocks of
 *              SHAKE256_RATE bytes each. Modifies the state. Can be called
@@ -449,6 +449,7 @@ void shake256_absorb(uint64_t state[25], const uint8_t *in, size_t inlen)
 *                                 (written to output)
 *              - uint64_t s[25]: pointer to input/output Keccak state
 **************************************************/
+// TODO: consider makeing the function squeeeze only one block (remove nblocks).
 void shake256_squeeze(uint8_t *out, size_t nblocks, uint64_t state[25])
 {
   keccak_squeezeblocks(out, nblocks, state, SHAKE256_RATE);
@@ -485,9 +486,9 @@ void shake256(uint8_t *out, size_t outlen, const uint8_t *in, size_t inlen)
 }
 
 /*************************************************
-* Name:        sha3_256
+* Name:        sha3_384
 *
-* Description: SHA3-256 with non-incremental API
+* Description: SHA3-384 with non-incremental API
 *
 * Arguments:   - uint8_t *h:        pointer to output (48 bytes)
 *              - const uint8_t *in: pointer to input

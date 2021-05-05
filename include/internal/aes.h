@@ -15,8 +15,6 @@
 
 #include "cleanup.h"
 
-#define MAX_AES_INVOKATION (MASK(32))
-
 #define AES256_KEY_BYTES   (32U)
 #define AES256_KEY_BITS    (AES256_KEY_BYTES * 8)
 #define AES256_BLOCK_BYTES (16U)

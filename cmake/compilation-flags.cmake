@@ -99,11 +99,10 @@ if(STANDALONE_IMPL)
 
   if(USE_SHA3_AND_SHAKE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_SHA3_AND_SHAKE=1")
-#  else()
-  # TODO: when shake is added move aes and sse3 flags here
+  else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -maes -mssse3")
   endif()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -maes -mssse3")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTANDALONE_IMPL=1")
 else()
   set(LINK_OPENSSL 1)

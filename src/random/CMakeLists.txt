@@ -4,12 +4,11 @@
 FILE(GLOB HEADERS ${CMAKE_CURRENT_LIST_DIR}/*.h)
 
 target_sources(${PROJECT_NAME}
-  PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/aes_ctr_prf.c 
-    ${CMAKE_CURRENT_LIST_DIR}/sampling.c 
-    ${CMAKE_CURRENT_LIST_DIR}/sampling_portable.c
+        PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/sampling.c
+        ${CMAKE_CURRENT_LIST_DIR}/sampling_portable.c
     
-    ${HEADERS}
+        ${HEADERS}
 )
 
 if(X86_64)
@@ -19,14 +18,20 @@ if(X86_64)
             ${CMAKE_CURRENT_LIST_DIR}/sampling_avx512.c)
 endif()
 
-if(STANDALONE_IMPL)
-  target_sources(${PROJECT_NAME}
-    PRIVATE
-      ${CMAKE_CURRENT_LIST_DIR}/aes.c)
-  # TODO: clarify the SHA3 situation and rename sha.c
-  if(NOT USE_SHA3_AND_SHAKE)
+if(USE_SHA3_AND_SHAKE)
+    # TODO: clarify the SHA3 situation and rename sha.c, fix identation
     target_sources(${PROJECT_NAME}
             PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/sha.c)
-  endif()
+            ${CMAKE_CURRENT_LIST_DIR}/shake_prf.c)
+else()
+    target_sources(${PROJECT_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/aes_ctr_prf.c)
+endif()
+
+if(STANDALONE_IMPL AND NOT USE_SHA3_AND_SHAKE)
+    target_sources(${PROJECT_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/sha.c
+            ${CMAKE_CURRENT_LIST_DIR}/aes.c)
 endif()

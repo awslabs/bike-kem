@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <stdlib.h>
 
-#define SHA3_384_RATE (96)
+#define SHA3_384_RATE (104)
 #define SHAKE256_RATE (136)
 
 void sha3_384(uint8_t h[48], const uint8_t *in, size_t inlen);

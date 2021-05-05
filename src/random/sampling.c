@@ -7,6 +7,8 @@
 
 #include <assert.h>
 
+#include "cleanup.h"
+#include "prf_internal.h"
 #include "sampling.h"
 #include "sampling_internal.h"
 
@@ -50,16 +52,16 @@ _INLINE_ uint8_t bit_scan_reverse_vartime(IN uint64_t val)
   return index;
 }
 
-_INLINE_ ret_t get_rand_mod_len(OUT uint32_t *    rand_pos,
-                                IN const uint32_t len,
-                                IN OUT aes_ctr_prf_state_t *prf_state)
+_INLINE_ ret_t get_rand_mod_len(OUT uint32_t       *rand_pos,
+                                IN const uint32_t  len,
+                                IN OUT prf_state_t *prf_state)
 {
   const uint64_t mask = MASK(bit_scan_reverse_vartime(len));
 
   do {
     // Generate a 32 bits (pseudo) random value.
     // This can be optimized to take only 16 bits.
-    GUARD(aes_ctr_prf((uint8_t *)rand_pos, prf_state, sizeof(*rand_pos)));
+    GUARD(get_prf_output((uint8_t *)rand_pos, prf_state, sizeof(*rand_pos)));
 
     // Mask relevant bits only
     (*rand_pos) &= mask;
@@ -90,11 +92,11 @@ _INLINE_ void make_odd_weight(IN OUT r_t *r)
 // The function uses the provided prf context.
 ret_t sample_uniform_r_bits_with_fixed_prf_context(
   OUT r_t *r,
-  IN OUT aes_ctr_prf_state_t *prf_state,
+  IN OUT prf_state_t         *prf_state,
   IN const must_be_odd_t      must_be_odd)
 {
   // Generate random data
-  GUARD(aes_ctr_prf(r->raw, prf_state, R_BYTES));
+  GUARD(get_prf_output(r->raw, prf_state, R_BYTES));
 
   // Mask upper bits of the MSByte
   r->raw[R_BYTES - 1] &= MASK(R_BITS + 8 - (R_BYTES * 8));
@@ -109,7 +111,7 @@ ret_t sample_uniform_r_bits_with_fixed_prf_context(
 ret_t generate_indices_mod_z(OUT idx_t *     out,
                              IN const size_t num_indices,
                              IN const size_t z,
-                             IN OUT aes_ctr_prf_state_t *prf_state,
+                             IN OUT prf_state_t *prf_state,
                              IN const sampling_ctx *ctx)
 {
   size_t ctr = 0;
@@ -123,28 +125,11 @@ ret_t generate_indices_mod_z(OUT idx_t *     out,
   return SUCCESS;
 }
 
-// Returns an array of r pseudorandom bits.
-// No restrictions exist for the top or bottom bits.
-// If the generation requires an odd number, then set must_be_odd = MUST_BE_ODD
-ret_t sample_uniform_r_bits(OUT r_t *r,
-                            IN const seed_t *      seed,
-                            IN const must_be_odd_t must_be_odd)
+_INLINE_ ret_t generate_sparse_rep_for_sk(OUT pad_r_t *r,
+                                          OUT idx_t *wlist,
+                                          IN OUT prf_state_t *prf_state)
 {
-  // For the seedexpander
-  DEFER_CLEANUP(aes_ctr_prf_state_t prf_state = {0}, aes_ctr_prf_state_cleanup);
-
-  GUARD(init_aes_ctr_prf_state(&prf_state, MAX_AES_INVOKATION, seed));
-
-  GUARD(sample_uniform_r_bits_with_fixed_prf_context(r, &prf_state, must_be_odd));
-
-  return SUCCESS;
-}
-
-ret_t generate_sparse_rep(OUT pad_r_t *r,
-                          OUT idx_t *wlist,
-                          IN OUT aes_ctr_prf_state_t *prf_state)
-{
-
+  // TODO: izbaci ctx van
   // Initialize the sampling context
   sampling_ctx ctx;
   sampling_ctx_init(&ctx);
@@ -156,14 +141,30 @@ ret_t generate_sparse_rep(OUT pad_r_t *r,
   bike_memcpy(wlist, wlist_temp, D * sizeof(idx_t));
   ctx.secure_set_bits(r, 0, wlist, D);
 
+  // TODO: secure clean wlist_temp;
+  return SUCCESS;
+}
+
+ret_t generate_secret_key(OUT pad_r_t *h0, OUT pad_r_t *h1,
+                          OUT idx_t *h0_wlist, OUT idx_t *h1_wlist,
+                          IN const seed_t *seed)
+{
+  DEFER_CLEANUP(prf_state_t prf_state = {0}, clean_prf_state);
+
+  // TODO: MAX_AES -> nesto drugo
+  GUARD(init_prf_state(&prf_state, MAX_PRF_INVOCATION, seed));
+
+  GUARD(generate_sparse_rep_for_sk(h0, h0_wlist, &prf_state));
+  GUARD(generate_sparse_rep_for_sk(h1, h1_wlist, &prf_state));
+
   return SUCCESS;
 }
 
 ret_t generate_error_vector(OUT pad_e_t *e, IN const seed_t *seed)
 {
-  DEFER_CLEANUP(aes_ctr_prf_state_t prf_state = {0}, aes_ctr_prf_state_cleanup);
+  DEFER_CLEANUP(prf_state_t prf_state = {0}, clean_prf_state);
 
-  GUARD(init_aes_ctr_prf_state(&prf_state, MAX_AES_INVOKATION, seed));
+  GUARD(init_prf_state(&prf_state, MAX_PRF_INVOCATION, seed));
 
   // Initialize the sampling context
   sampling_ctx ctx;

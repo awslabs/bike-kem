@@ -170,15 +170,10 @@ int crypto_kem_keypair(OUT unsigned char *pk, OUT unsigned char *sk)
   // The randomness of the key generation
   DEFER_CLEANUP(seeds_t seeds = {0}, seeds_cleanup);
 
-  // An AES_PRF state for the secret key
-  DEFER_CLEANUP(aes_ctr_prf_state_t h_prf_state = {0}, aes_ctr_prf_state_cleanup);
-
   get_seeds(&seeds);
-  GUARD(init_aes_ctr_prf_state(&h_prf_state, MAX_AES_INVOKATION, &seeds.seed[0]));
-
-  // Generate the secret key (h0, h1) with weight w/2
-  GUARD(generate_sparse_rep(&h0, l_sk.wlist[0].val, &h_prf_state));
-  GUARD(generate_sparse_rep(&h1, l_sk.wlist[1].val, &h_prf_state));
+  GUARD(generate_secret_key(&h0, &h1,
+                            l_sk.wlist[0].val, l_sk.wlist[1].val,
+                            &seeds.seed[0]));
 
   // Generate sigma
   convert_seed_to_m_type(&l_sk.sigma, &seeds.seed[1]);
