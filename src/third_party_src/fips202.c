@@ -449,7 +449,6 @@ void shake256_absorb(uint64_t state[25], const uint8_t *in, size_t inlen)
 *                                 (written to output)
 *              - uint64_t s[25]: pointer to input/output Keccak state
 **************************************************/
-// TODO: consider makeing the function squeeeze only one block (remove nblocks).
 void shake256_squeeze(uint8_t *out, size_t nblocks, uint64_t state[25])
 {
   keccak_squeezeblocks(out, nblocks, state, SHAKE256_RATE);

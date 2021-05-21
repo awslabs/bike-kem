@@ -22,6 +22,14 @@ function test_kats {
       flag="-DBIND_PK_AND_M=1"
       kat_l1=BIKE_L1_binding.kat
       kat_l3=BIKE_L3_binding.kat
+    elif [ $2 -eq 2 ]; then
+      flag="-DUSE_SHA3_AND_SHAKE=1"
+      kat_l1=BIKE_L1_sha3.kat
+      kat_l3=BIKE_L3_sha3.kat
+    elif [ $2 -eq 3 ]; then
+      flag="-DBIND_PK_AND_M=1 -DUSE_SHA3_AND_SHAKE=1"
+      kat_l1=BIKE_L1_binding_sha3.kat
+      kat_l3=BIKE_L3_binding_sha3.kat
     fi
   fi
 
@@ -40,7 +48,7 @@ function test_kats {
           fi
 
           cmake -DCMAKE_BUILD_TYPE=$build_type -DLEVEL=$level -DUSE_NIST_RAND=1 ${flag} ${extra_flag} ../../;
-          make -j8
+          make -j
           $intel_sde -$arch -- ./bike-test
           if [ "$level" = "1" ]; then
             diff PQCkemKAT_BIKE_5223.rsp ../../tests/kats/${kat_l1} > /dev/null

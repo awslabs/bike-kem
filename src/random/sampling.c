@@ -38,10 +38,10 @@ void get_seeds(OUT seeds_t *seeds)
   }
 }
 
-// BSR returns ceil(log2(val))
+// BSR returns ceil(log2(val)).
 _INLINE_ uint8_t bit_scan_reverse_vartime(IN uint64_t val)
 {
-  // index is always smaller than 64
+  // index is always smaller than 64.
   uint8_t index = 0;
 
   while(val != 0) {
@@ -66,7 +66,7 @@ _INLINE_ ret_t get_rand_mod_len(OUT uint32_t       *rand_pos,
     // Mask relevant bits only
     (*rand_pos) &= mask;
 
-    // Break if a number that is smaller than len is found
+    // Break if a number that is smaller than len is found.
     if((*rand_pos) < len) {
       break;
     }
@@ -116,7 +116,7 @@ ret_t generate_indices_mod_z(OUT idx_t *     out,
 {
   size_t ctr = 0;
 
-  // Generate num_indices unique (pseudo) random numbers modulo z
+  // Generate num_indices unique (pseudo) random numbers modulo z.
   do {
     GUARD(get_rand_mod_len(&out[ctr], z, prf_state));
     ctr += ctx->is_new(out, ctr);
@@ -127,21 +127,17 @@ ret_t generate_indices_mod_z(OUT idx_t *     out,
 
 _INLINE_ ret_t generate_sparse_rep_for_sk(OUT pad_r_t *r,
                                           OUT idx_t *wlist,
-                                          IN OUT prf_state_t *prf_state)
+                                          IN OUT prf_state_t *prf_state,
+                                          IN sampling_ctx *ctx)
 {
-  // TODO: izbaci ctx van
-  // Initialize the sampling context
-  sampling_ctx ctx;
-  sampling_ctx_init(&ctx);
-
   idx_t wlist_temp[WLIST_SIZE_ADJUSTED_D] = {0};
 
-  GUARD(generate_indices_mod_z(wlist_temp, D, R_BITS, prf_state, &ctx));
+  GUARD(generate_indices_mod_z(wlist_temp, D, R_BITS, prf_state, ctx));
 
   bike_memcpy(wlist, wlist_temp, D * sizeof(idx_t));
-  ctx.secure_set_bits(r, 0, wlist, D);
+  ctx->secure_set_bits(r, 0, wlist, D);
 
-  // TODO: secure clean wlist_temp;
+  secure_clean((uint8_t *)wlist_temp, sizeof(*wlist_temp));
   return SUCCESS;
 }
 
@@ -149,26 +145,29 @@ ret_t generate_secret_key(OUT pad_r_t *h0, OUT pad_r_t *h1,
                           OUT idx_t *h0_wlist, OUT idx_t *h1_wlist,
                           IN const seed_t *seed)
 {
+  // Initialize the sampling context.
+  sampling_ctx ctx = {0};
+  sampling_ctx_init(&ctx);
+
   DEFER_CLEANUP(prf_state_t prf_state = {0}, clean_prf_state);
 
-  // TODO: MAX_AES -> nesto drugo
   GUARD(init_prf_state(&prf_state, MAX_PRF_INVOCATION, seed));
 
-  GUARD(generate_sparse_rep_for_sk(h0, h0_wlist, &prf_state));
-  GUARD(generate_sparse_rep_for_sk(h1, h1_wlist, &prf_state));
+  GUARD(generate_sparse_rep_for_sk(h0, h0_wlist, &prf_state, &ctx));
+  GUARD(generate_sparse_rep_for_sk(h1, h1_wlist, &prf_state, &ctx));
 
   return SUCCESS;
 }
 
 ret_t generate_error_vector(OUT pad_e_t *e, IN const seed_t *seed)
 {
+  // Initialize the sampling context.
+  sampling_ctx ctx;
+  sampling_ctx_init(&ctx);
+
   DEFER_CLEANUP(prf_state_t prf_state = {0}, clean_prf_state);
 
   GUARD(init_prf_state(&prf_state, MAX_PRF_INVOCATION, seed));
-
-  // Initialize the sampling context
-  sampling_ctx ctx;
-  sampling_ctx_init(&ctx);
 
   idx_t wlist[WLIST_SIZE_ADJUSTED_T] = {0};
   GUARD(generate_indices_mod_z(wlist, T, N_BITS, &prf_state, &ctx));
@@ -177,11 +176,13 @@ ret_t generate_error_vector(OUT pad_e_t *e, IN const seed_t *seed)
   ctx.secure_set_bits(&e->val[0], 0, wlist, T);
   ctx.secure_set_bits(&e->val[1], R_BITS, wlist, T);
 
-  // Clean the padding of the elements
+  // Clean the padding of the elements.
   PE0_RAW(e)[R_BYTES - 1] &= LAST_R_BYTE_MASK;
   PE1_RAW(e)[R_BYTES - 1] &= LAST_R_BYTE_MASK;
   bike_memset(&PE0_RAW(e)[R_BYTES], 0, R_PADDED_BYTES - R_BYTES);
   bike_memset(&PE1_RAW(e)[R_BYTES], 0, R_PADDED_BYTES - R_BYTES);
+
+  secure_clean((uint8_t *)wlist, sizeof(*wlist));
 
   return SUCCESS;
 }

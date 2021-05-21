@@ -70,8 +70,12 @@ fi
 if [ "${test_num}" -lt "3" ]; then
   test_kats ${intel_sde}
   test_kats ${intel_sde} 1       # Test the binded pk and m version
+  test_kats ${intel_sde} 2       # Test the sha3 and shake version
+  test_kats ${intel_sde} 3       # Test the binded pk and m and sha3 version
   test_sanitizers ${intel_sde}
   test_sanitizers ${intel_sde} 1 # Test the binded pk and m version
+  test_sanitizers ${intel_sde} 2 # Test the sha3 and shake version
+  test_sanitizers ${intel_sde} 3 # Test the binded pk and m and sha3 version
 fi
 
 cd ${basedir}

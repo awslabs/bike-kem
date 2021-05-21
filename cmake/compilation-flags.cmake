@@ -88,10 +88,10 @@ if(USE_SHA3_AND_SHAKE)
 endif()
 
 # Standalone implementation features an implementation of AES that uses
-# AES-NI and SSE3 x86 instructions (which means it is not fully portable).
-# The fully portable implementation uses OpenSSL for AES and it can run
-# on any CPU architecture as long as OpenSSL is available.
-# TODO: clarify situation with sha3
+# AES-NI and SSE3 x86 instructions. This means that the implementation
+# that uses AES based PRF is not fully portable. However, if SHAKE based
+# PRF is used (USE_SHA3_AND_SHAKE flag is set) then the implementation
+# is fully portable because SHA3 and SHAKE are implemented in pure C.
 if(STANDALONE_IMPL)
   if((NOT X86_64) AND (NOT X86) AND (NOT USE_SHA3_AND_SHAKE))
     message(FATAL_ERROR " Standalone implementation with AES based PRNG works only on x86 systems.")
