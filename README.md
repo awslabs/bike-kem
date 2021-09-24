@@ -82,8 +82,7 @@ proposed in:
 
 Flag USE_SHA3_AND_SHAKE turns on the version of BIKE which uses SHA3 algorithm
 as a hash function (wherever a hash function is needed) and SHAKE based PRF.
-This modification was proposed by the BIKE team in XYZ (TODO: insert reference
-once it's available).
+This modification was proposed by the BIKE team in https://bikesuite.org/files/v4.2/BIKE_Spec.2021.07.26.1.pdf.
 
 ## License
 This project is licensed under the Apache-2.0 License.
