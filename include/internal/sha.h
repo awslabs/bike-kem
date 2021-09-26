@@ -30,6 +30,21 @@ CLEANUP_FUNC(sha_dgst, sha_dgst_t)
 
 #if defined(STANDALONE_IMPL)
 
+# if defined(USE_SHA3_AND_SHAKE)
+
+#    include "fips202.h"
+
+_INLINE_ ret_t sha(OUT sha_dgst_t *  dgst,
+                   IN const uint32_t byte_len,
+                   IN const uint8_t *msg)
+{
+  sha3_384(dgst->u.raw, msg, byte_len);
+
+  return SUCCESS;
+}
+
+# else // USE_SHA3_AND_SHAKE
+
 #  define HASH_BLOCK_BYTES 128ULL
 
 typedef struct sha512_dgst_s {
@@ -41,6 +56,7 @@ typedef struct sha512_dgst_s {
 bike_static_assert(sizeof(sha512_dgst_t) == SHA512_DGST_BYTES, sha512_dgst_size);
 
 ret_t sha(OUT sha_dgst_t *dgst, IN uint32_t byte_len, IN const uint8_t *msg);
+#  endif //USE_SHA3_AND_SHAKE
 
 #else // USE_OPENSSL
 

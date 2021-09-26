@@ -17,7 +17,7 @@ test_num=$1
 
 # Download Intel SDE if it's not available on the system
 intel_sde=sde64
-if ! command -v $intel_sde &> /dev/null
+if ! command -v ${intel_sde} &> /dev/null
 then
     echo "sde64 could not be found, downloading the program..."
     intel_sde_ver=sde-external-8.63.0-2021-01-18-lin
@@ -52,8 +52,9 @@ rm -rf build/
 mkdir build;
 cd build
 
-if [ "$test_num" -lt "1" ]; then
-    test_format "-DSTANDALONE_IMPL=1"
+if [ "${test_num}" -lt "1" ]; then
+    test_format
+    test_format "-DSTANDALONE_IMPL=1 -DBIND_PK_AND_M=1"
 fi
 
 # NOTE: clang-tidy is currently disabled because it doesn't know
@@ -66,9 +67,15 @@ fi
 #fi
 
 # Test KATs
-if [ "$test_num" -lt "3" ]; then
+if [ "${test_num}" -lt "3" ]; then
   test_kats ${intel_sde}
+  test_kats ${intel_sde} 1       # Test the binded pk and m version
+  test_kats ${intel_sde} 2       # Test the sha3 and shake version
+  test_kats ${intel_sde} 3       # Test the binded pk and m and sha3 version
   test_sanitizers ${intel_sde}
+  test_sanitizers ${intel_sde} 1 # Test the binded pk and m version
+  test_sanitizers ${intel_sde} 2 # Test the sha3 and shake version
+  test_sanitizers ${intel_sde} 3 # Test the binded pk and m and sha3 version
 fi
 
-cd -
+cd ${basedir}

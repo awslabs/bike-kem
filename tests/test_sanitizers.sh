@@ -12,6 +12,15 @@ function test_sanitizers {
 
   intel_sde=$1
 
+  flag=""
+  # The second function argument specifies a variant of BIKE to be tested.
+  # So far there is only one variant: binded public key and message.
+  if [ $# -eq 2 ]; then
+    if [ $2 -eq 1 ]; then
+      flag="-DBIND_PK_AND_M=1"
+    fi
+  fi
+
   # Currently this test runs only with clang-9
   if ! command -v clang-9 &> /dev/null
   then
@@ -26,13 +35,13 @@ function test_sanitizers {
 
           # Standalone implementation requires AES-NI instructions
           # which are not available on Nehalem CPU.
-          if [ "$arch" = "nhm" ] && [ "$extra_flag" = "-DSTANDALONE_IMPL=1" ]; then
+          if [ "${arch}" = "nhm" ] && [ "${extra_flag}" = "-DSTANDALONE_IMPL=1" ]; then
             continue
           fi
 
-          CC=clang-9 cmake $2 -DCMAKE_BUILD_TYPE=Release -DNUM_OF_TESTS=$num_of_tests -DLEVEL=$level $extra_flag $sanitizer ..;
+          CC=clang-9 cmake -DCMAKE_BUILD_TYPE=Release -DNUM_OF_TESTS=${num_of_tests} -DLEVEL=${level} ${flag} ${extra_flag} ${sanitizer} ..;
           make -j8
-          $intel_sde -$arch -- ./bike-test
+          $intel_sde -${arch} -- ./bike-test
           rm -rf *
         done
       done

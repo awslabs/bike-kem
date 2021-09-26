@@ -101,6 +101,13 @@ typedef struct func_k_s {
   m_t c1;
 } func_k_t;
 
+#if defined(BIND_PK_AND_M)
+typedef struct pk_m_bind_s {
+  pk_t pk;
+  m_t  m;
+} pk_m_bind_t;
+#endif
+
 // For a faster rotate we triplicate the syndrome (into 3 copies)
 typedef struct syndrome_s {
   uint64_t qw[3 * R_QWORDS];

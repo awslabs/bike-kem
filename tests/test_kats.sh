@@ -10,6 +10,29 @@ function test_kats {
 
   intel_sde=$1
 
+  # By default we test the Round-3 BIKE
+  flag=""
+  kat_l1=BIKE_L1.kat
+  kat_l3=BIKE_L3.kat
+
+  # The second function argument specifies a variant of BIKE to be tested.
+  # So far there is only one variant: binded public key and message.
+  if [ $# -eq 2 ]; then
+    if [ $2 -eq 1 ]; then
+      flag="-DBIND_PK_AND_M=1"
+      kat_l1=BIKE_L1_binding.kat
+      kat_l3=BIKE_L3_binding.kat
+    elif [ $2 -eq 2 ]; then
+      flag="-DUSE_SHA3_AND_SHAKE=1"
+      kat_l1=BIKE_L1_sha3.kat
+      kat_l3=BIKE_L3_sha3.kat
+    elif [ $2 -eq 3 ]; then
+      flag="-DBIND_PK_AND_M=1 -DUSE_SHA3_AND_SHAKE=1"
+      kat_l1=BIKE_L1_binding_sha3.kat
+      kat_l3=BIKE_L3_binding_sha3.kat
+    fi
+  fi
+
   mkdir build
   cd build
 
@@ -24,13 +47,13 @@ function test_kats {
             continue
           fi
 
-          cmake -DCMAKE_BUILD_TYPE=$build_type -DLEVEL=$level -DUSE_NIST_RAND=1 ${extra_flag} ../../;
-          make -j8
+          cmake -DCMAKE_BUILD_TYPE=$build_type -DLEVEL=$level -DUSE_NIST_RAND=1 ${flag} ${extra_flag} ../../;
+          make -j
           $intel_sde -$arch -- ./bike-test
           if [ "$level" = "1" ]; then
-            diff PQCkemKAT_BIKE_5223.rsp ../../tests/kats/BIKE_L1.kat > /dev/null
+            diff PQCkemKAT_BIKE_5223.rsp ../../tests/kats/${kat_l1} > /dev/null
           else
-            diff PQCkemKAT_BIKE_10105.rsp ../../tests/kats/BIKE_L3.kat > /dev/null
+            diff PQCkemKAT_BIKE_10105.rsp ../../tests/kats/${kat_l3} > /dev/null
           fi
           rm -rf *
         done

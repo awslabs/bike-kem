@@ -20,18 +20,47 @@ _INLINE_ void convert_seed_to_m_type(OUT m_t *m, IN const seed_t *seed)
   bike_memcpy(m->raw, seed->raw, sizeof(*m));
 }
 
+#if defined(BIND_PK_AND_M)
+
+_INLINE_ void convert_dgst_to_seed_type(OUT seed_t *seed, IN const sha_dgst_t *in)
+{
+  bike_memcpy(seed->raw, in->u.raw, sizeof(*seed));
+}
+
+#else
+
 _INLINE_ void convert_m_to_seed_type(OUT seed_t *seed, IN const m_t *m)
 {
   bike_static_assert(sizeof(*m) == sizeof(*seed), m_size_eq_seed_size);
   bike_memcpy(seed->raw, m->raw, sizeof(*seed));
 }
 
+#endif
+
 // (e0, e1) = H(m)
-_INLINE_ ret_t function_h(OUT pad_e_t *e, IN const m_t *m)
+_INLINE_ ret_t function_h(OUT pad_e_t *e, IN const m_t *m, IN const pk_t *pk)
 {
   DEFER_CLEANUP(seed_t seed = {0}, seed_cleanup);
 
+#if defined(BIND_PK_AND_M)
+  DEFER_CLEANUP(sha_dgst_t  dgst = {0}, sha_dgst_cleanup);
+  DEFER_CLEANUP(pk_m_bind_t pk_m = {0}, pk_m_bind_cleanup);
+
+  // Coppy the public key and the message to a temporary buffer
+  pk_m.pk = *pk;
+  pk_m.m  = *m;
+
+  // Hash the binded pk and m
+  GUARD(sha(&dgst, sizeof(pk_m), (uint8_t *)&pk_m));
+
+  convert_dgst_to_seed_type(&seed, &dgst);
+#else
+  // pk is unused parameter in this case so we do this to avoid
+  // clang sanitizers complaining.
+  (void)pk;
+
   convert_m_to_seed_type(&seed, m);
+#endif
   return generate_error_vector(e, &seed);
 }
 
@@ -141,15 +170,10 @@ int crypto_kem_keypair(OUT unsigned char *pk, OUT unsigned char *sk)
   // The randomness of the key generation
   DEFER_CLEANUP(seeds_t seeds = {0}, seeds_cleanup);
 
-  // An AES_PRF state for the secret key
-  DEFER_CLEANUP(aes_ctr_prf_state_t h_prf_state = {0}, aes_ctr_prf_state_cleanup);
-
   get_seeds(&seeds);
-  GUARD(init_aes_ctr_prf_state(&h_prf_state, MAX_AES_INVOKATION, &seeds.seed[0]));
-
-  // Generate the secret key (h0, h1) with weight w/2
-  GUARD(generate_sparse_rep(&h0, l_sk.wlist[0].val, &h_prf_state));
-  GUARD(generate_sparse_rep(&h1, l_sk.wlist[1].val, &h_prf_state));
+  GUARD(generate_secret_key(&h0, &h1,
+                            l_sk.wlist[0].val, l_sk.wlist[1].val,
+                            &seeds.seed[0]));
 
   // Generate sigma
   convert_seed_to_m_type(&l_sk.sigma, &seeds.seed[1]);
@@ -201,7 +225,7 @@ int crypto_kem_enc(OUT unsigned char *     ct,
 
   // e = H(m) = H(seed[0])
   convert_seed_to_m_type(&m, &seeds.seed[0]);
-  GUARD(function_h(&e, &m));
+  GUARD(function_h(&e, &m, &l_pk));
 
   // Calculate the ciphertext
   GUARD(encrypt(&l_ct, &e, &l_pk, &m));
@@ -266,7 +290,7 @@ int crypto_kem_dec(OUT unsigned char *     ss,
 
   // Check if H(m') is equal to (e0', e1')
   // (in constant-time)
-  GUARD(function_h(&e_tmp, &m_prime));
+  GUARD(function_h(&e_tmp, &m_prime, &l_sk.pk));
   success_cond = secure_cmp(PE0_RAW(&e_prime), PE0_RAW(&e_tmp), R_BYTES);
   success_cond &= secure_cmp(PE1_RAW(&e_prime), PE1_RAW(&e_tmp), R_BYTES);
 

@@ -7,6 +7,7 @@ set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 
 include_directories(${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR}/internal)
+include_directories(${SRC_DIR}/third_party_src)
 
 include(cmake/arch.cmake)
 include(cmake/compilation-flags.cmake)

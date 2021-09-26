@@ -7,6 +7,7 @@
 
 #include "cpu_features.h"
 #include <stdint.h>
+#include <stdio.h>
 
 static uint32_t avx2_flag;
 static uint32_t avx512_flag;
@@ -28,6 +29,7 @@ uint32_t is_vpclmul_enabled(void) { return vpclmul_flag; }
 #  define EBX_BIT_AVX2    (1 << 5)
 #  define EBX_BIT_AVX512  (1 << 16)
 #  define ECX_BIT_VPCLMUL (1 << 10)
+#  define ECX_BIT_PCLMUL  (1 << 1)
 
 static uint32_t get_cpuid_count(uint32_t  leaf,
                                 uint32_t  sub_leaf,
@@ -57,8 +59,13 @@ void cpu_features_init(void)
 
   avx2_flag    = ebx & EBX_BIT_AVX2;
   avx512_flag  = ebx & EBX_BIT_AVX512;
-  pclmul_flag  = avx2_flag;
   vpclmul_flag = ecx & ECX_BIT_VPCLMUL;
+
+  if(!get_cpuid_count(1, EXTENDED_FEATURES_SUBLEAF_ZERO,
+                      &eax, &ebx, &ecx, &edx)) {
+    return;
+  }
+  pclmul_flag = ecx & ECX_BIT_PCLMUL;
 }
 
 #else // X86_64

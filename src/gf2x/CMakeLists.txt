@@ -15,12 +15,12 @@ target_sources(${PROJECT_NAME}
 )
 
 if(X86_64)
-    target_sources(${PROJECT_NAME}
-            PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_avx2.c
-            ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_avx512.c
-            ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_base_pclmul.c
-            ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_base_vpclmul.c
-            ${CMAKE_CURRENT_LIST_DIR}/gf2x_ksqr_avx2.c
-            ${CMAKE_CURRENT_LIST_DIR}/gf2x_ksqr_avx512.c)
+  target_sources(${PROJECT_NAME}
+    PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_avx2.c
+      ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_avx512.c
+      ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_base_pclmul.c
+      ${CMAKE_CURRENT_LIST_DIR}/gf2x_mul_base_vpclmul.c
+      ${CMAKE_CURRENT_LIST_DIR}/gf2x_ksqr_avx2.c
+      ${CMAKE_CURRENT_LIST_DIR}/gf2x_ksqr_avx512.c)
 endif()

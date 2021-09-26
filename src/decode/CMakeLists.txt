@@ -11,8 +11,8 @@ target_sources(${PROJECT_NAME}
 )
 
 if(X86_64)
-    target_sources(${PROJECT_NAME}
-            PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/decode_avx2.c
-            ${CMAKE_CURRENT_LIST_DIR}/decode_avx512.c)
+  target_sources(${PROJECT_NAME}
+    PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}/decode_avx2.c
+      ${CMAKE_CURRENT_LIST_DIR}/decode_avx512.c)
 endif()

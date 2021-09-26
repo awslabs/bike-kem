@@ -30,7 +30,7 @@
 #endif
 
 // Divide by the divider and round up to next integer
-#define DIVIDE_AND_CEIL(x, divider) (((x) + (divider)) / (divider))
+#define DIVIDE_AND_CEIL(x, divider) (((x) + (divider) - 1) / (divider))
 
 // Bit manipulations
 // Linux Assemblies, except for Ubuntu, cannot understand what ULL mean.

@@ -57,17 +57,24 @@ presented in the following papers:
   e5089. https://doi.org/10.1002/cpe.5089.
 
 The GF2X inversion in this package is based on:
-- Nir Drucker, Shay Gueron, and Dusan Kostic. 2020.
-  "Fast polynomial inversion for post quantum QC-MDPC cryptography". 
-  Cryptology ePrint Archive, 2020. https://eprint.iacr.org/2020/298.pdf
+- Nir Drucker, Shay Gueron, Dusan Kostic, Fast polynomial inversion for post quantum QC-MDPC cryptography, Information and Computation, 2021, 104799, ISSN 0890-5401, https://doi.org/10.1016/j.ic.2021.104799.
 
-The analysis of the constant-time BGF decoder used in this package is given in:
-- Nir Drucker, Shay Gueron, and Dusan Kostic. 2019.
-  “On Constant-Time QC-MDPC Decoding with Negligible Failure Rate.”
-  Cryptology ePrint Archive, 2019. https://eprint.iacr.org/2019/1289.
-- Nir Drucker, Shay Gueron, and Dusan Kostic. 2019.
-  “QC-MDPC decoders with several shades of gray.”
-  Cryptology ePrint Archive, 2019. https://eprint.iacr.org/2019/1423
+The definition and the analysis of the constant-time BGF decoder used in this package is given in:
+- Drucker N., Gueron S., Kostic D. (2020) On Constant-Time QC-MDPC Decoders with Negligible Failure Rate. In: Baldi M., Persichetti E., Santini P. (eds) Code-Based Cryptography. CBCrypto 2020. Lecture Notes in Computer Science, vol 12087. Springer, Cham. https://doi.org/10.1007/978-3-030-54074-6_4
+- Drucker N., Gueron S., Kostic D. (2020) QC-MDPC Decoders with Several Shades of Gray. In: Ding J., Tillich JP. (eds) Post-Quantum Cryptography. PQCrypto 2020. Lecture Notes in Computer Science, vol 12100. Springer, Cham. https://doi.org/10.1007/978-3-030-44223-1_3
+
+The code contains additional versions that can be enabled by the following
+flags: BIND_PK_AND_M and USE_SHA3_AND_SHAKE. The flags can be turned on
+individually or both at the same time.
+
+Flag BIND_PK_AND_M enables binding of the public key and the message when
+generating the ciphertext in encapsulation. This security measure was
+proposed in:
+- Drucker N., Gueron S., Kostic D. (2021) Binding BIKE Errors to a Key Pair. In: Dolev S., Margalit O., Pinkas B., Schwarzmann A. (eds) Cyber Security Cryptography and Machine Learning. CSCML 2021. Lecture Notes in Computer Science, vol 12716. Springer, Cham. https://doi.org/10.1007/978-3-030-78086-9_21
+
+Flag USE_SHA3_AND_SHAKE turns on the version of BIKE which uses SHA3 algorithm
+as a hash function (wherever a hash function is needed) and SHAKE based PRF.
+This modification was proposed by the BIKE team in https://bikesuite.org/files/v4.2/BIKE_Spec.2021.07.26.1.pdf.
 
 ## License
 This project is licensed under the Apache-2.0 License.
@@ -105,6 +112,8 @@ Additional compilation flags:
  - OPENSSL_DIR              - Set the path of the OpenSSL include/lib
                               directories (required only if OpenSSL is not
                               installed in usual directories).
+ - BIND_PK_AND_M            - Bind the public key and the message in encapsulation.
+ - USE_SHA3_AND_SHAKE       - Use SHA3 as the hash function and SHAKE as a PRF.
  - FIXED_SEED               - Using a fixed seed, for debug purposes.
  - RDTSC                    - Benchmark the algorithm (results in CPU cycles).
  - VERBOSE                  - Add verbose (level: 1-4 default: 1).
