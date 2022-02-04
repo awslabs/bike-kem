@@ -7,6 +7,7 @@
 
 #include <assert.h>
 
+#include "utilities.h"
 #include "sampling_internal.h"
 
 #define AVX2_INTERNAL
@@ -83,35 +84,62 @@ void secure_set_bits_avx2(OUT pad_r_t *   r,
   }
 }
 
-int is_new_avx2(IN const idx_t *wlist, IN const size_t ctr)
+// We need the list of indices to be a multiple of avx2 register.
+#define WLIST_SIZE_ADJUSTED_T \
+  (REG_DWORDS * DIVIDE_AND_CEIL(T, REG_DWORDS))
+
+ret_t sample_error_vec_indices_avx2(OUT idx_t *out,
+                                    IN OUT prf_state_t *prf_state)
 {
-  bike_static_assert((sizeof(idx_t) == sizeof(uint32_t)), idx_t_is_not_uint32_t);
+  // To generate T indices in constant-time, i.e. without rejection sampling,
+  // we generate MAX_RAND_INDICES_T random values with the appropriate bit
+  // length (the bit size of N) and in constant time copy the first T valid
+  // indices to the output.
 
-  REG_T idx_ctr = SET1_I32(wlist[ctr]);
+  size_t ctr = 0; // Current number of valid and distinct indices.
+  const idx_t bit_mask = MASK(bit_scan_reverse_vartime(2*R_BITS));
 
-  for(size_t i = 0; i < ctr; i += REG_DWORDS) {
-    // Comparisons are done with SIMD instructions with each SIMD register
-    // containing REG_DWORDS elements. We compare registers element-wise:
-    // idx_ctr = {8 repetitions of wlist[ctr]}, with
-    // idx_cur = {8 consecutive elements from wlist}.
-    // In the last iteration we consider wlist elements only up to ctr.
+  idx_t wlist[WLIST_SIZE_ADJUSTED_T];
+  // Label all indices as invalid.
+  bike_memset((uint8_t*)wlist, 0xff, WLIST_SIZE_ADJUSTED_T * sizeof(idx_t));
 
-    REG_T    idx_cur = LOAD(&wlist[i]);
-    REG_T    cmp_res = CMPEQ_I32(idx_ctr, idx_cur);
-    uint32_t check   = MOVEMASK(cmp_res);
+  // Generate MAX_RAND_INDICES_T random values.
+  for (size_t i = 0; i < MAX_RAND_INDICES_T; i++) {
+    // Generate random index with the required bit length.
+    uint32_t idx;
+    GUARD(get_prf_output((uint8_t*)&idx, prf_state, sizeof(idx_t)));
+    idx &= bit_mask;
 
-    // Handle the last iteration by appropriate masking.
-    if(ctr < (i + REG_DWORDS)) {
-      // MOVEMASK instruction in AVX2 compares corresponding bytes from
-      // two given vector registers and produces a 32-bit mask. On the other hand,
-      // we compare idx_t elements, not bytes, so we multiply by sizeof(idx_t).
-      check &= MASK((ctr - i) * sizeof(idx_t));
+    // Loop over the output array to determine if |idx| is a duplicate,
+    // and store it in the lcoation pointed to by |ctr|.
+    REG_T vidx = SET1_I32(idx);
+    REG_T vctr = SET1_I32(ctr);
+    REG_T vdup = SET_ZERO;
+    REG_T step = SET1_I32(8);
+    REG_T tmp  = SET_I32(7, 6, 5, 4, 3, 2, 1, 0);
+
+    for (size_t j = 0; j < WLIST_SIZE_ADJUSTED_T; j += REG_DWORDS) {
+
+      REG_T vout = LOAD(&wlist[j]);
+      vdup |= CMPEQ_I32(vidx, vout);
+
+      REG_T write_mask = CMPEQ_I32(vctr, tmp);
+      tmp = ADD_I32(tmp, step);
+
+      MSTORE32(&wlist[j], write_mask, vidx);
     }
 
-    if(check != 0) {
-      return 0;
-    }
+    uint32_t is_dup = MOVEMASK(vdup);
+
+    // Check if |idx| is a valid index (< N) and increase the counter
+    // only if |idx| is valid and it is not a duplicate.
+    uint32_t is_valid = secure_l32(idx, 2*R_BITS);
+    ctr += ((is_dup == 0) & is_valid);
   }
 
-  return 1;
+  // Copy the indices to the output.
+  bike_memcpy((uint8_t*)out, (uint8_t*)wlist, T * sizeof(idx_t));
+
+  return SUCCESS;
 }
+

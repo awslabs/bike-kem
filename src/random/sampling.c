@@ -12,16 +12,6 @@
 #include "sampling.h"
 #include "sampling_internal.h"
 
-// SIMD implementation of is_new function requires the size of wlist
-// to be a multiple of the number of DWORDS in a SIMD register (REG_DWORDS).
-// The function is used both for generating D and T random numbers so we define
-// two separate macros.
-#define AVX512_REG_DWORDS (16)
-#define WLIST_SIZE_ADJUSTED_D \
-  (AVX512_REG_DWORDS * DIVIDE_AND_CEIL(D, AVX512_REG_DWORDS))
-#define WLIST_SIZE_ADJUSTED_T \
-  (AVX512_REG_DWORDS * DIVIDE_AND_CEIL(T, AVX512_REG_DWORDS))
-
 void get_seeds(OUT seeds_t *seeds)
 {
 #if defined(USE_NIST_RAND)
@@ -36,20 +26,6 @@ void get_seeds(OUT seeds_t *seeds)
   for(uint32_t i = 0; i < NUM_OF_SEEDS; ++i) {
     print("s: ", (uint64_t *)&seeds->seed[i], SIZEOF_BITS(seed_t));
   }
-}
-
-// BSR returns ceil(log2(val)).
-_INLINE_ uint8_t bit_scan_reverse_vartime(IN uint64_t val)
-{
-  // index is always smaller than 64.
-  uint8_t index = 0;
-
-  while(val != 0) {
-    val >>= 1;
-    index++;
-  }
-
-  return index;
 }
 
 _INLINE_ ret_t get_rand_mod_len(OUT uint32_t       *rand_pos,
@@ -111,15 +87,23 @@ ret_t sample_uniform_r_bits_with_fixed_prf_context(
 ret_t generate_indices_mod_z(OUT idx_t *     out,
                              IN const size_t num_indices,
                              IN const size_t z,
-                             IN OUT prf_state_t *prf_state,
-                             IN const sampling_ctx *ctx)
+                             IN OUT prf_state_t *prf_state)
 {
   size_t ctr = 0;
 
   // Generate num_indices unique (pseudo) random numbers modulo z.
   do {
     GUARD(get_rand_mod_len(&out[ctr], z, prf_state));
-    ctr += ctx->is_new(out, ctr);
+
+    // Check if the index is new and increment the counter if it is.
+    int is_new = 1;
+    for (size_t i = 0; i < ctr; i++) {
+      if (out[i] == out[ctr]) {
+        is_new = 0;
+        break;
+      }
+    }
+    ctr += is_new;
   } while(ctr < num_indices);
 
   return SUCCESS;
@@ -130,9 +114,9 @@ _INLINE_ ret_t generate_sparse_rep_for_sk(OUT pad_r_t *r,
                                           IN OUT prf_state_t *prf_state,
                                           IN sampling_ctx *ctx)
 {
-  idx_t wlist_temp[WLIST_SIZE_ADJUSTED_D] = {0};
+  idx_t wlist_temp[D] = {0};
 
-  GUARD(generate_indices_mod_z(wlist_temp, D, R_BITS, prf_state, ctx));
+  GUARD(generate_indices_mod_z(wlist_temp, D, R_BITS, prf_state));
 
   bike_memcpy(wlist, wlist_temp, D * sizeof(idx_t));
   ctx->secure_set_bits(r, 0, wlist, D);
@@ -169,8 +153,8 @@ ret_t generate_error_vector(OUT pad_e_t *e, IN const seed_t *seed)
 
   GUARD(init_prf_state(&prf_state, MAX_PRF_INVOCATION, seed));
 
-  idx_t wlist[WLIST_SIZE_ADJUSTED_T] = {0};
-  GUARD(generate_indices_mod_z(wlist, T, N_BITS, &prf_state, &ctx));
+  idx_t wlist[T];
+  GUARD(ctx.sample_error_vec_indices(wlist, &prf_state));
 
   // (e0, e1) hold bits 0..R_BITS-1 and R_BITS..2*R_BITS-1 of the error, resp.
   ctx.secure_set_bits(&e->val[0], 0, wlist, T);

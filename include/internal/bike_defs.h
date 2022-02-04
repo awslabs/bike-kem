@@ -27,6 +27,11 @@
 #  define THRESHOLD_COEFF1 0.005265
 #  define THRESHOLD_MIN    52
 
+// When generating an error vector we can't use rejection sampling because of
+// constant-time requirements so we generate always the maximum number
+// of indices and then use only the first T valid indices.
+# define MAX_RAND_INDICES_T 488
+
 // The gf2m code is optimized to a block in this case:
 #  define BLOCK_BITS 32768
 #elif(LEVEL == 1)
@@ -38,6 +43,11 @@
 #  define THRESHOLD_COEFF0 13.530
 #  define THRESHOLD_COEFF1 0.0069722
 #  define THRESHOLD_MIN    36
+
+// When generating an error vector we can't use rejection sampling because of
+// constant-time requirements so we generate always the maximum number
+// of indices and then use only the first T valid indices.
+# define MAX_RAND_INDICES_T 327
 
 // The gf2x code is optimized to a block in this case:
 #  define BLOCK_BITS       (16384)
