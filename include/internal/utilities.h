@@ -34,6 +34,20 @@ _INLINE_ uint64_t bswap_64(uint64_t x)
 
 uint64_t r_bits_vector_weight(IN const r_t *in);
 
+// BSR returns ceil(log2(val)).
+_INLINE_ uint8_t bit_scan_reverse_vartime(IN uint64_t val)
+{
+  // index is always smaller than 64.
+  uint8_t index = 0;
+
+  while(val != 0) {
+    val >>= 1;
+    index++;
+  }
+
+  return index;
+}
+
 // "VALUE_BARRIER returns |a|, but prevents GCC and Clang from reasoning about
 // the returned value. This is used to mitigate compilers undoing constant-time
 // code, until we can express our requirements directly in the language.
@@ -103,6 +117,40 @@ _INLINE_ uint32_t secure_cmp32(IN const uint32_t v1, IN const uint32_t v2)
   // checked individually on such platforms
   // (e.g., by checking the compiler-generated assembly).
   return (v1 == v2 ? 1 : 0);
+#endif
+}
+
+// Return 1 if v1 < v2. Return 0 otherwise.
+_INLINE_ uint32_t secure_l32(IN const uint32_t v1, IN const uint32_t v2)
+{
+#if defined(__aarch64__)
+  uint32_t res;
+  __asm__ __volatile__("cmp  %w[V2], %w[V1]; \n "
+                       "cset %w[RES], HI; \n"
+                       : [RES] "=r"(res)
+                       : [V1] "r"(v1), [V2] "r"(v2)
+                       : "cc" /*The condition code flag*/);
+  return res;
+#elif defined(__x86_64__) || defined(__i386__)
+  uint32_t res;
+  __asm__ __volatile__("xor  %%edx, %%edx; \n"
+                       "cmp  %1, %2; \n "
+                       "setl %%dl; \n"
+                       "mov %%edx, %0; \n"
+                       : "=r"(res)
+                       : "r"(v2), "r"(v1)
+                       : "rdx");
+  return res;
+#else
+  // Insecure comparison: The main purpose of secure_l32 is to avoid
+  // branches to prevent potential side channel leaks. To do that,
+  // we normally leverage some special CPU instructions such as "setl"
+  // (for __x86_64__) and "cset" (for __aarch64__). When dealing with general
+  // CPU architectures, the interpretation of the line below is left for the
+  // compiler. It could lead to an "insecure" branch. This case needs to be
+  // checked individually on such platforms
+  // (e.g., by checking the compiler-generated assembly).
+  return (v1 < v2 ? 1 : 0);
 #endif
 }
 

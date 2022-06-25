@@ -7,10 +7,10 @@
 
 #include <assert.h>
 
-#include "sampling_internal.h"
 #include "utilities.h"
+#include "sampling_internal.h"
 
-#define MAX_WLIST_SIZE (T > D ? T : D)
+#define MAX_WLIST_SIZE (MAX_RAND_INDICES_T)
 
 void secure_set_bits_port(OUT pad_r_t *   r,
                           IN const size_t first_pos,
@@ -33,7 +33,7 @@ void secure_set_bits_port(OUT pad_r_t *   r,
   // Identify the QW position of every value, and the bit position inside this QW.
   for(size_t i = 0; i < w_size; i++) {
     int32_t w  = wlist[i] - first_pos;
-    pos_qw[i]  = w >> 6;
+    pos_qw[i]  = (w >> 6);
     pos_bit[i] = BIT(w & MASK(6));
   }
 
@@ -48,13 +48,45 @@ void secure_set_bits_port(OUT pad_r_t *   r,
   }
 }
 
-int is_new_port(IN const idx_t *wlist, IN const size_t ctr)
+ret_t sample_error_vec_indices_port(OUT idx_t *out,
+                                    IN OUT prf_state_t *prf_state)
 {
-  for(size_t i = 0; i < ctr; i++) {
-    if(wlist[i] == wlist[ctr]) {
-      return 0;
+  // To generate T indices in constant-time, i.e. without rejection sampling,
+  // we generate MAX_RAND_INDICES_T random values with the appropriate bit
+  // length (the bit size of N) and in constant time copy the first T valid
+  // indices to the output.
+
+  size_t ctr = 0; // Current number of valid and distinct indices.
+  const idx_t bit_mask = MASK(bit_scan_reverse_vartime(2*R_BITS));
+
+  // Label all output elements as invalid.
+  bike_memset((uint8_t*)out, 0xff, T * sizeof(idx_t));
+
+  // Generate MAX_RAND_INDICES_T random values.
+  for (size_t i = 0; i < MAX_RAND_INDICES_T; i++) {
+    // Generate random index with the required bit length.
+    uint32_t idx;
+    GUARD(get_prf_output((uint8_t*)&idx, prf_state, sizeof(idx_t)));
+    idx &= bit_mask;
+
+    // Loop over the output array to determine if |idx| is a duplicate,
+    // and store it in the lcoation pointed to by |ctr|.
+    uint32_t is_dup = 0;
+    for (size_t j = 0; j < T; j++) {
+      is_dup |= secure_cmp32(idx, out[j]);
+
+      // Set |mask| to 0 if |ctr| != |j|, to all ones otherwise.
+      uint32_t mask = -secure_cmp32(j, ctr);
+      // Write |idx| to out if |ctr| == |j|.
+      out[j] = (~mask & out[j]) | (mask & idx);
     }
+
+    // Check if |idx| is a valid index (< N) and increase the counter
+    // only if |idx| is valid and it is not a duplicate.
+    uint32_t is_valid = secure_l32(idx, 2*R_BITS);
+    ctr += ((1 - is_dup) & is_valid);
   }
 
-  return 1;
+  return SUCCESS;
 }
+
