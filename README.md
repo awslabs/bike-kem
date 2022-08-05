@@ -148,3 +148,27 @@ Compilation on other platforms may require some adjustments.
 KATs
 ----
 The KATs are located in the `tests/kats/` directory.
+
+Performance
+----
+
+The performance of BIKE (number of CPU cycles) benchmarked on
+Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz:
+
+```
+  L1    |     a     |     b     |     c     |     d     |
+keygen  |   589401  |   595447  |   603593  |   604667  |
+encaps  |    97967  |   114787  |   133078  |   158862  |
+decaps  |  1135597  |  1157761  |  1190043  |  1214234  |
+
+  L3    |     a     |     b     |     c     |     d     |
+keygen  |  1823910  |  1824686  |  1828516  |  1833566  |
+encaps  |   223367  |   254540  |   285981  |   339143  |
+decaps  |  3887439  |  3939558  |  3963570  |  3977745  |
+```
+
+where:
+- (a) round 3 BIKE
+- (b) round 3 BIKE + BIND_PK_AND_M
+- (c) round 3 BIKE + SHA3_AND_SHAKE
+- (d) round 3 BIKE + BIND_PK_AND_M + SHA3_AND_SHAKE
