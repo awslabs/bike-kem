@@ -151,21 +151,38 @@ The KATs are located in the `tests/kats/` directory.
 
 Performance
 ----
+The performance of different versions of BIKE measured on two CPUs, one with vector-PCLMUL support and the other one without. The numbers represent average number of processor cycles required to complete each operation.
 
-The performance of BIKE (number of CPU cycles) benchmarked on
-Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz:
-
+Measurements on Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz (_doesn't_ support vector-PCLMUL):
 ```
-  L1    |     a     |     b     |     c     |     d     |
-keygen  |   589401  |   595447  |   603593  |   604667  |
-encaps  |    97967  |   114787  |   133078  |   158862  |
-decaps  |  1135597  |  1157761  |  1190043  |  1214234  |
+  L1    |      a      |      b      |      c      |      d      |
+----------------------------------------------------------------|
+keygen  |    589'401  |    595'447  |    603'593  |    604'667  |
+encaps  |     97'967  |    114'787  |    133'078  |    158'862  |
+decaps  |  1'135'597  |  1'157'761  |  1'190'043  |  1'214'234  |
 
-  L3    |     a     |     b     |     c     |     d     |
-keygen  |  1823910  |  1824686  |  1828516  |  1833566  |
-encaps  |   223367  |   254540  |   285981  |   339143  |
-decaps  |  3887439  |  3939558  |  3963570  |  3977745  |
+  L3    |      a      |      b      |      c      |      d      |
+----------------------------------------------------------------|
+keygen  |  1'823'910  |  1'824'686  |  1'828'516  |  1'833'566  |
+encaps  |    223'367  |    254'540  |    285'981  |    339'143  |
+decaps  |  3'887'439  |  3'939'558  |  3'963'570  |  3'977'745  |
 ```
+
+Measurements on Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz (supports vector-PCLMUL):
+```
+  L1    |      a      |      b      |      c      |      d      |
+----------------------------------------------------------------|
+keygen  |    366'456  |    365'549  |    370'630  |    369'250  |
+encaps  |     74'838  |     87'397  |    103'579  |    119'274  |
+decaps  |  1'177'511  |  1'190'863  |  1'201'765  |  1'222'844  |
+
+  L3    |      a      |      b      |      c      |      d      |
+----------------------------------------------------------------|
+keygen  |  1'049'339  |  1'058'253  |  1'063'406  |  1'053'004  |
+encaps  |    164'422  |    185'810  |    209'930  |    243'466  |
+decaps  |  3'512'350  |  3'491'114  |  3'544'996  |  3'571'774  |
+```
+
 
 where:
 - (a) round 3 BIKE
