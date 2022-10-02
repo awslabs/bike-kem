@@ -4,15 +4,14 @@ Additional implementation of BIKE (Bit Flipping Key Encapsulation)
 This package is an "Additional Optimized" implementation of the 
 Key Encapsulation Mechanism (KEM) [BIKE](https://bikesuite.org). 
 
-It was developed and is maintained by Nir Drucker, Shay Gueron, and Dusan Kostic,
-(drucker.nir@gmail.com, shay.gueron@gmail.com, dkostic@protonmail.com).
+It is developed and maintained solely by the DGK team that consists of
+Nir Drucker, Shay Gueron, and Dusan Kostic.
 
-BIKE is a submission to the 
-[Post-Quantum Cryptography Standardization project](http://csrc.nist.gov/projects/post-quantum-cryptography).
+BIKE is a KEM submission to the [Post-Quantum Cryptography Standardization project](https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization). At this point in time, NIST is considering BIKE as a fourth round candidate in the PQC Standardization process ([link](https://csrc.nist.gov/News/2022/pqc-candidates-to-be-standardized-and-round-4)).
 
 The official BIKE website is: https://bikesuite.org. 
 This package corresponds to the specification document 
-["BIKE_Round_3.2020.05.03.1.pdf"](https://bikesuite.org/files/v4.0/BIKE_Spec.2020.05.03.1.pdf).
+["BIKE_Spec.2021.09.29.1.pdf"](https://bikesuite.org/files/v4.2/BIKE_Spec.2021.09.29.1.pdf), but also includes other options that the DGK team deems as useful (via compilation flags).
 
 The package includes implementations for several CPU architectures.
 In particular, it can be compiled for a 64-bit ARM and for x86 processors.
@@ -76,7 +75,8 @@ Flag USE_SHA3_AND_SHAKE turns on the version of BIKE which uses SHA3 algorithm
 as a hash function (wherever a hash function is needed) and SHAKE based PRF.
 This modification was proposed by the BIKE team in https://bikesuite.org/files/v4.2/BIKE_Spec.2021.07.26.1.pdf.
 
-## License
+License
+-------
 This project is licensed under the Apache-2.0 License.
 
 Dependencies
@@ -156,36 +156,35 @@ The performance of different versions of BIKE measured on two CPUs, one with vec
 Measurements on Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz (_doesn't_ support vector-PCLMUL):
 ```
   L1    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |    589'401  |    595'447  |    603'593  |    604'667  |
-encaps  |     97'967  |    114'787  |    133'078  |    158'862  |
-decaps  |  1'135'597  |  1'157'761  |  1'190'043  |  1'214'234  |
+keygen  |    589,401  |    595,447  |    603,593  |    604,667  |
+encaps  |     97,967  |    114,787  |    133,078  |    158,862  |
+decaps  |  1,135,597  |  1,157,761  |  1,190,043  |  1,214,234  |
 
   L3    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |  1'823'910  |  1'824'686  |  1'828'516  |  1'833'566  |
-encaps  |    223'367  |    254'540  |    285'981  |    339'143  |
-decaps  |  3'887'439  |  3'939'558  |  3'963'570  |  3'977'745  |
+keygen  |  1,823,910  |  1,824,686  |  1,828,516  |  1,833,566  |
+encaps  |    223,367  |    254,540  |    285,981  |    339,143  |
+decaps  |  3,887,439  |  3,939,558  |  3,963,570  |  3,977,745  |
 ```
 
 Measurements on Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz (supports vector-PCLMUL):
 ```
   L1    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |    366'456  |    365'549  |    370'630  |    369'250  |
-encaps  |     74'838  |     87'397  |    103'579  |    119'274  |
-decaps  |  1'177'511  |  1'190'863  |  1'201'765  |  1'222'844  |
+keygen  |    366,456  |    365,549  |    370,630  |    369,250  |
+encaps  |     74,838  |     87,397  |    103,579  |    119,274  |
+decaps  |  1,177,511  |  1,190,863  |  1,201,765  |  1,222,844  |
 
   L3    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |  1'049'339  |  1'058'253  |  1'063'406  |  1'053'004  |
-encaps  |    164'422  |    185'810  |    209'930  |    243'466  |
-decaps  |  3'512'350  |  3'491'114  |  3'544'996  |  3'571'774  |
+keygen  |  1,049,339  |  1,058,253  |  1,063,406  |  1,053,004  |
+encaps  |    164,422  |    185,810  |    209,930  |    243,466  |
+decaps  |  3,512,350  |  3,491,114  |  3,544,996  |  3,571,774  |
 ```
-
 
 where:
 - (a) round 3 BIKE
 - (b) round 3 BIKE + BIND_PK_AND_M
 - (c) round 3 BIKE + SHA3_AND_SHAKE
 - (d) round 3 BIKE + BIND_PK_AND_M + SHA3_AND_SHAKE
+
+Rejection sampling
+------------------
+The rejection sampling design and implementation that is used here is described in the document entitled ["Isochronous implementation of the errors-vector generation of BIKE"](https://github.com/awslabs/bike-kem/blob/master/BIKE_Rejection_Sampling.pdf). This document explains our response to the paper [Don’t reject this: Key-recovery timing attacks due to rejection-sampling in HQC and BIKE](https://doi.org/10.46586/tches.v2022.i3.223-263) by Qian Guo et al, which is implemented here (since June 2022).
