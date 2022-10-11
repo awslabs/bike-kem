@@ -29,8 +29,9 @@
 
 // When generating an error vector we can't use rejection sampling because of
 // constant-time requirements so we generate always the maximum number
-// of indices and then use only the first T valid indices.
-# define MAX_RAND_INDICES_T 488
+// of indices and then use only the first T valid indices, as explained in:
+// https://github.com/awslabs/bike-kem/blob/master/BIKE_Rejection_Sampling.pdf
+# define MAX_RAND_INDICES_T 373
 
 // The gf2m code is optimized to a block in this case:
 #  define BLOCK_BITS 32768
@@ -46,8 +47,9 @@
 
 // When generating an error vector we can't use rejection sampling because of
 // constant-time requirements so we generate always the maximum number
-// of indices and then use only the first T valid indices.
-# define MAX_RAND_INDICES_T 327
+// of indices and then use only the first T valid indices, as explained in:
+// https://github.com/awslabs/bike-kem/blob/master/BIKE_Rejection_Sampling.pdf
+# define MAX_RAND_INDICES_T 271
 
 // The gf2x code is optimized to a block in this case:
 #  define BLOCK_BITS       (16384)
