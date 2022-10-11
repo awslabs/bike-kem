@@ -78,8 +78,17 @@ if(LEVEL)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLEVEL=${LEVEL}")
 endif()
 
+if(UNIFORM_SAMPLING)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUNIFORM_SAMPLING=1")
+endif()
+
 if(BIND_PK_AND_M)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBIND_PK_AND_M=1")
+endif()
+
+# SHA3 is the default in Round-4 BIKE
+if(NOT USE_AES_AND_SHA2)
+  set(USE_SHA3_AND_SHAKE ON)
 endif()
 
 # Using SHA3 and SHAKE forces the standalone implementation

@@ -48,6 +48,7 @@ void secure_set_bits_port(OUT pad_r_t *   r,
   }
 }
 
+#if defined(UNIFORM_SAMPLING)
 ret_t sample_error_vec_indices_port(OUT idx_t *out,
                                     IN OUT prf_state_t *prf_state)
 {
@@ -89,4 +90,4 @@ ret_t sample_error_vec_indices_port(OUT idx_t *out,
 
   return SUCCESS;
 }
-
+#endif

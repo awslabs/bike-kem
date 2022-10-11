@@ -28,6 +28,7 @@ void get_seeds(OUT seeds_t *seeds)
   }
 }
 
+#if defined(UNIFORM_SAMPLING)
 _INLINE_ ret_t get_rand_mod_len(OUT uint32_t       *rand_pos,
                                 IN const uint32_t  len,
                                 IN OUT prf_state_t *prf_state)
@@ -51,6 +52,7 @@ _INLINE_ ret_t get_rand_mod_len(OUT uint32_t       *rand_pos,
 
   return SUCCESS;
 }
+#endif
 
 _INLINE_ void make_odd_weight(IN OUT r_t *r)
 {
@@ -84,6 +86,7 @@ ret_t sample_uniform_r_bits_with_fixed_prf_context(
   return SUCCESS;
 }
 
+#if defined(UNIFORM_SAMPLING)
 ret_t generate_indices_mod_z(OUT idx_t *     out,
                              IN const size_t num_indices,
                              IN const size_t z,
@@ -108,6 +111,36 @@ ret_t generate_indices_mod_z(OUT idx_t *     out,
 
   return SUCCESS;
 }
+#endif
+
+ret_t sample_indices_fisher_yates(OUT idx_t *out,
+                                  IN  size_t num_indices,
+                                  IN  idx_t max_idx_val,
+                                  IN OUT prf_state_t *prf_state) {
+
+    for (size_t i = num_indices; i-- > 0;) {
+#define CWW_RAND_BYTES 4
+        uint64_t rand = 0ULL;
+        GUARD(get_prf_output((uint8_t *)&rand, prf_state, CWW_RAND_BYTES));
+        rand *= (max_idx_val - i);
+
+		// new index l is such that i <= l < max_idx_val
+        uint32_t l = i + (uint32_t)(rand >> (CWW_RAND_BYTES * 8));
+
+		// Loop over (the end of) the output array to determine if l is a duplicate
+        uint32_t is_dup = 0;
+        for (size_t j = i + 1; j < num_indices; ++j) {
+            is_dup |= secure_cmp32(l, out[j]);
+        }
+
+		// if l is a duplicate out[i] gets i else out[i] gets l
+		// mask is all 1 if l is a duplicate, all 0 else
+        uint32_t mask = -is_dup;
+        out[i] = (mask & i) ^ (~mask & l);
+    }
+
+    return SUCCESS;
+}
 
 _INLINE_ ret_t generate_sparse_rep_for_sk(OUT pad_r_t *r,
                                           OUT idx_t *wlist,
@@ -116,7 +149,11 @@ _INLINE_ ret_t generate_sparse_rep_for_sk(OUT pad_r_t *r,
 {
   idx_t wlist_temp[D] = {0};
 
+#if defined(UNIFORM_SAMPLING)
   GUARD(generate_indices_mod_z(wlist_temp, D, R_BITS, prf_state));
+#else
+  GUARD(sample_indices_fisher_yates(wlist_temp, D, R_BITS, prf_state));
+#endif
 
   bike_memcpy(wlist, wlist_temp, D * sizeof(idx_t));
   ctx->secure_set_bits(r, 0, wlist, D);
@@ -154,7 +191,11 @@ ret_t generate_error_vector(OUT pad_e_t *e, IN const seed_t *seed)
   GUARD(init_prf_state(&prf_state, MAX_PRF_INVOCATION, seed));
 
   idx_t wlist[T];
+#if defined(UNIFORM_SAMPLING)
   GUARD(ctx.sample_error_vec_indices(wlist, &prf_state));
+#else
+  GUARD(sample_indices_fisher_yates(wlist, T, N_BITS, &prf_state));
+#endif
 
   // (e0, e1) hold bits 0..R_BITS-1 and R_BITS..2*R_BITS-1 of the error, resp.
   ctx.secure_set_bits(&e->val[0], 0, wlist, T);

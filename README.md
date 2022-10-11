@@ -10,8 +10,9 @@ Nir Drucker, Shay Gueron, and Dusan Kostic.
 BIKE is a KEM submission to the [Post-Quantum Cryptography Standardization project](https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization). At this point in time, NIST is considering BIKE as a fourth round candidate in the PQC Standardization process ([link](https://csrc.nist.gov/News/2022/pqc-candidates-to-be-standardized-and-round-4)).
 
 The official BIKE website is: https://bikesuite.org. 
-This package corresponds to the specification document 
-["BIKE_Spec.2021.09.29.1.pdf"](https://bikesuite.org/files/v4.2/BIKE_Spec.2021.09.29.1.pdf), but also includes other options that the DGK team deems as useful (via compilation flags).
+This package corresponds to the Round 4 specification document
+["BIKE_Spec_2022.10.10.1.pd"](https://bikesuite.org/files/v5.0/BIKE_Spec.2022.10.04.1.pdf) (Spec v.5.1),
+but also includes other options that the DGK team deems as useful (via compilation flags).
 
 The package includes implementations for several CPU architectures.
 In particular, it can be compiled for a 64-bit ARM and for x86 processors.
@@ -113,7 +114,9 @@ Additional compilation flags:
                               directories (required only if OpenSSL is not
                               installed in usual directories).
  - BIND_PK_AND_M            - Bind the public key and the message in encapsulation.
- - USE_SHA3_AND_SHAKE       - Use SHA3 as the hash function and SHAKE as a PRF.
+ - USE_AES_AND_SHA2         - Use AES and SHA2 instead of SHA3 and SHAKE.
+ - UNIFORM_SAMPLING         - Use uniform sampling for private key and error vector
+                              instead of the biased sampling introduced in round 4.
  - FIXED_SEED               - Using a fixed seed, for debug purposes.
  - RDTSC                    - Benchmark the algorithm (results in CPU cycles).
  - VERBOSE                  - Add verbose (level: 1-4 default: 1).
@@ -155,40 +158,44 @@ The performance of different versions of BIKE measured on two CPUs, one with vec
 
 Measurements on Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz (_doesn't_ support vector-PCLMUL):
 ```
-  L1    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |    589,712  |    594,706  |    598,685  |    600,404  |
-encaps  |     96,388  |    113,165  |    128,012  |    152,060  |
-decaps  |  1,136,909  |  1,157,417  |  1,161,506  |  1,185,791  |
+  L1    |      a      |      b      |      c      |      d      |      e      |
+------------------------------------------------------------------------------|
+keygen  |    602,189  |    589,401  |    595,447  |    603,593  |    604,667  |
+encaps  |    129,970  |     97,967  |    114,787  |    133,078  |    158,862  |
+decaps  |  1,184,546  |  1,135,597  |  1,157,761  |  1,190,043  |  1,214,234  |
 
-  L3    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |  1,825,772  |  1,822,106  |  1,831,052  |  1,830,032  |
-encaps  |    217,102  |    248,402  |    275,782  |    326,975  |
-decaps  |  3,883,230  |  3,934,521  |  3,955,854  |  3,980,154  |
+  L3    |      a      |      b      |      c      |      d      |      e      |
+------------------------------------------------------------------------------|
+keygen  |   1,824,934 |  1,823,910  |  1,824,686  |  1,828,516  |  1,833,566  |
+encaps  |     286,974 |    223,367  |    254,540  |    285,981  |    339,143  |
+decaps  |   3,956,456 |  3,887,439  |  3,939,558  |  3,963,570  |  3,977,745  |
 ```
 
 Measurements on Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz (supports vector-PCLMUL):
 ```
-  L1    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |    365,577  |    365,577  |    369,842  |    369,960  |
-encaps  |     74,152  |     85,611  |     96,731  |    114,971  |
-decaps  |  1,171,399  |  1,182,687  |  1,194,031  |  1,212,310  |
+  L1    |      a      |      b      |      c      |      d      |      e      |
+----------------------------------------------------------------|--------------
+keygen  |    370,689  |    366,456  |    365,549  |    370,630  |    369,250  |
+encaps  |     95,512  |     74,838  |     87,397  |     99,579  |    119,274  |
+decaps  |  1,194,070  |  1,177,511  |  1,190,863  |  1,201,765  |  1,222,844  |
 
-  L3    |      a      |      b      |      c      |      d      |
-----------------------------------------------------------------|
-keygen  |  1,046,864  |  1,053,795  |  1,063,760  |  1,060,223  |
-encaps  |    157,035  |    181,363  |    201,464  |    234,489  |
-decaps  |  3,469,903  |  3,490,288  |  3,534,174  |  3,547,011  |
+  L3    |      a      |      b      |      c      |      d      |      e      |
+------------------------------------------------------------------------------|
+keygen  |  1,064,040  |  1,049,339  |  1,058,253  |  1,063,406  |  1,053,004  |
+encaps  |    204,959  |    164,422  |    185,810  |    209,930  |    243,466  |
+decaps  |  3,531,790  |  3,512,350  |  3,491,114  |  3,544,996  |  3,571,774  |
 ```
 
 where:
-- (a) round 3 BIKE
-- (b) round 3 BIKE + BIND_PK_AND_M
-- (c) round 3 BIKE + SHA3_AND_SHAKE
-- (d) round 3 BIKE + BIND_PK_AND_M + SHA3_AND_SHAKE
+- (a) Round 4 (Spec v5.1)   BIKE (with biased sampling)
+- (b) Round 3 (Spec v4.2)   BIKE + USE_AES_AND_SHA2
+- (c) Round 3 (Spec v4.2)   BIKE + USE_AES_AND_SHA2 + BIND_PK_AND_M
+- (d) Round 3 (Spec v4.2)   BIKE + SHA3_AND_SHAKE
+- (e) Round 3 (Spec v4.2)   BIKE + SHA3_AND_SHAKE + BIND_PK_AND_M 
 
-Rejection sampling
+Sampling fixed-weight vectors
 ------------------
-The rejection sampling design and implementation that is used here is described in the document entitled ["Isochronous implementation of the errors-vector generation of BIKE"](https://github.com/awslabs/bike-kem/blob/master/BIKE_Rejection_Sampling.pdf). This document explains our response to the paper [Don’t reject this: Key-recovery timing attacks due to rejection-sampling in HQC and BIKE](https://doi.org/10.46586/tches.v2022.i3.223-263) by Qian Guo et al, which is implemented here (since June 2022).
+
+Rejection sampling (until BIKE Spec v4.2)
+------------------
+The rejection sampling design and implementation that was used (until [Spec v4.2](https://bikesuite.org/files/v4.2/BIKE_Spec.2021.07.26.1.pdf)) is described in the document entitled ["Isochronous implementation of the errors-vector generation of BIKE"](https://github.com/awslabs/bike-kem/blob/master/BIKE_Rejection_Sampling.pdf). That document explains our response to the paper [Don't reject this: Key-recovery timing attacks due to rejection-sampling in HQC and BIKE](https://doi.org/10.46586/tches.v2022.i3.223-263) by Qian Guo et al, which is implemented here (since June 2022).

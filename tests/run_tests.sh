@@ -15,23 +15,25 @@ fi
 
 test_num=$1
 
+# NOTE: Intel SDE can't be directly downloaded anymore so we are
+#       disabling testing with the SDE for now.
 # Download Intel SDE if it's not available on the system
-intel_sde=sde64
-if ! command -v ${intel_sde} &> /dev/null
-then
-    echo "sde64 could not be found, downloading the program..."
-    intel_sde_ver=sde-external-8.63.0-2021-01-18-lin
-    rm -rf ${intel_sde_ver} ${intel_sde_ver}.tar.bz2
-    wget https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/${intel_sde_ver}.tar.bz2
-    tar -xvjf sde-external-8.63.0-2021-01-18-lin.tar.bz2
-    rm ${intel_sde_ver}.tar.bz2
-    if ! command -v ${intel_sde_ver}/sde64 &> /dev/null
-    then
-      echo "Downloading Intel SDE was NOT successful, please download the program manually."
-      exit
-    fi
-    intel_sde=`realpath ${intel_sde_ver}/sde64`
-fi
+# intel_sde=sde64
+# if ! command -v ${intel_sde} &> /dev/null
+# then
+#     echo "sde64 could not be found, downloading the program..."
+#     intel_sde_ver=sde-external-9.7.0-2022-05-09-lin
+#     rm -rf ${intel_sde_ver} ${intel_sde_ver}.tar.xz
+#     wget https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/${intel_sde_ver}.tar.xz
+#     tar -xvjf sde-external-8.63.0-2021-01-18-lin.tar.xz
+#     rm ${intel_sde_ver}.tar.bz2
+#     if ! command -v ${intel_sde_ver}/sde64 &> /dev/null
+#     then
+#       echo "Downloading Intel SDE was NOT successful, please download the program manually."
+#       exit
+#     fi
+#     intel_sde=`realpath ${intel_sde_ver}/sde64`
+# fi
 
 # Avoid removing the "build" directory if the script does not run from the
 # package root directory
@@ -68,14 +70,16 @@ fi
 
 # Test KATs
 if [ "${test_num}" -lt "3" ]; then
-  test_kats ${intel_sde}
-  test_kats ${intel_sde} 1       # Test the binded pk and m version
-  test_kats ${intel_sde} 2       # Test the sha3 and shake version
-  test_kats ${intel_sde} 3       # Test the binded pk and m and sha3 version
-  test_sanitizers ${intel_sde}
-  test_sanitizers ${intel_sde} 1 # Test the binded pk and m version
-  test_sanitizers ${intel_sde} 2 # Test the sha3 and shake version
-  test_sanitizers ${intel_sde} 3 # Test the binded pk and m and sha3 version
+  test_kats
+  test_kats 1       # Test the round 3 version
+  test_kats 2       # Test the round 3 + binded pk and m version
+  test_kats 3       # Test the round 3 + sha3 and shake version
+  test_kats 4       # Test the round 3 + binded pk and m and sha3 version
+  test_sanitizers
+  test_sanitizers 1 # Test the round 3 version
+  test_sanitizers 2 # Test the round3 + binded pk and m version
+  test_sanitizers 3 # Test the round3 + sha3 and shake version
+  test_sanitizers 4 # Test the round3 + binded pk and m and sha3 version
 fi
 
 cd ${basedir}
