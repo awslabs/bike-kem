@@ -84,6 +84,7 @@ void secure_set_bits_avx512(OUT pad_r_t *   r,
   }
 }
 
+#if defined(UNIFORM_SAMPLING)
 // We need the list of indices to be a multiple of avx512 register.
 #define WLIST_SIZE_ADJUSTED_T \
   (REG_DWORDS * DIVIDE_AND_CEIL(T, REG_DWORDS))
@@ -140,4 +141,4 @@ ret_t sample_error_vec_indices_avx512(OUT idx_t *out,
 
   return SUCCESS;
 }
-
+#endif
