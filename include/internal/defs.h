@@ -50,6 +50,9 @@
 #define WORDS_IN_YMM (BYTES_IN_YMM / sizeof(uint16_t))
 #define WORDS_IN_ZMM (BYTES_IN_ZMM / sizeof(uint16_t))
 
+#define DWORDS_IN_YMM (BYTES_IN_YMM / sizeof(uint32_t))
+#define DWORDS_IN_ZMM (BYTES_IN_ZMM / sizeof(uint32_t))
+
 #define QWORDS_IN_XMM (BYTES_IN_XMM / sizeof(uint64_t))
 #define QWORDS_IN_YMM (BYTES_IN_YMM / sizeof(uint64_t))
 #define QWORDS_IN_ZMM (BYTES_IN_ZMM / sizeof(uint64_t))
