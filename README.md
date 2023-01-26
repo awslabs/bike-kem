@@ -122,7 +122,7 @@ Additional compilation flags:
  - VERBOSE                  - Add verbose (level: 1-4 default: 1).
  - NUM_OF_TESTS             - Set the number of tests (keygen/encaps/decaps)
                               to run (default: 1).
- - LEVEL                    - Security level 1 or 3.
+ - LEVEL                    - Security level 1, 3, or 5.
  - ASAN/TSAN/MSAN/UBSAN     - Enable the associated clang sanitizer.
  
 To clean - remove the `build` directory. Note that a "clean" is required prior
@@ -169,6 +169,12 @@ decaps  |  1,184,546  |  1,135,597  |  1,157,761  |  1,190,043  |  1,214,234  |
 keygen  |   1,824,934 |  1,823,910  |  1,824,686  |  1,828,516  |  1,833,566  |
 encaps  |     286,974 |    223,367  |    254,540  |    285,981  |    339,143  |
 decaps  |   3,956,456 |  3,887,439  |  3,939,558  |  3,963,570  |  3,977,745  |
+
+  L5    |      a      |      b      |      c      |      d      |      e      |
+------------------------------------------------------------------------------|
+keygen  |   4,559,483 |  4,555,773  |  4,566,744  |  4,603,036  |  4,583,101  |
+encaps  |     564,340 |    459,785  |    510,131  |    548,016  |    623,044  |
+decaps  |   9,779,774 |  9,738,607  |  9,650,434  |  9,770,514  |  9,836,698  |
 ```
 
 Measurements on Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz (supports vector-PCLMUL):
@@ -184,6 +190,12 @@ decaps  |  1,194,070  |  1,177,511  |  1,190,863  |  1,201,765  |  1,222,844  |
 keygen  |  1,064,040  |  1,049,339  |  1,058,253  |  1,063,406  |  1,053,004  |
 encaps  |    204,959  |    164,422  |    185,810  |    209,930  |    243,466  |
 decaps  |  3,531,790  |  3,512,350  |  3,491,114  |  3,544,996  |  3,571,774  |
+
+  L5    |      a      |      b      |      c      |      d      |      e      |
+------------------------------------------------------------------------------|
+keygen  |  2,629,963  |  2,643,342  |  2,653,044  |  2,614,496  |  2,625,225  |
+encaps  |    399,718  |    325,787  |    363,979  |    397,391  |    463,783  |
+decaps  |  9,187,778  |  9,106,695  |  9,150,513  |  9,181,999  |  9,304,213  |
 ```
 
 where:
