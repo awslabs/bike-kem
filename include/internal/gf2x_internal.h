@@ -154,7 +154,7 @@ _INLINE_ void gf2x_ctx_init(gf2x_ctx *ctx)
   }
 
 #if defined(X86_64)
-  if(is_vpclmul_enabled()) {
+  if(is_vpclmul_enabled() && is_avx512_enabled()) {
     ctx->mul_base_qwords = GF2X_VPCLMUL_BASE_QWORDS;
     ctx->mul_base        = gf2x_mul_base_vpclmul;
     ctx->sqr             = gf2x_sqr_vpclmul;
