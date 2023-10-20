@@ -11,7 +11,7 @@ BIKE is a KEM submission to the [Post-Quantum Cryptography Standardization proje
 
 The official BIKE website is: https://bikesuite.org. 
 This package corresponds to the Round 4 specification document
-["BIKE_Spec_2022.10.10.1.pd"](https://bikesuite.org/files/v5.0/BIKE_Spec.2022.10.04.1.pdf) (Spec v.5.1),
+["BIKE_Spec_2022.10.10.1.pdf"](https://bikesuite.org/files/v5.0/BIKE_Spec.2022.10.10.1.pdf) (Spec v.5.1),
 but also includes other options that the DGK team deems as useful (via compilation flags).
 
 The package includes implementations for several CPU architectures.
