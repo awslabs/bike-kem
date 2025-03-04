@@ -37,7 +37,7 @@ by NIST.
 All the functionalities in the package are implemented in constant-time,
 which means that: 
 - No branch depends on a secret piece of information; 
-- All the memory access patters are independent of secret information.
+- All the memory access patterns are independent of secret information.
 
 The optimizations in this package use, among other techniques, algorithms
 presented in the following papers:
